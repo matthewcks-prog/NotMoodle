@@ -37,9 +37,10 @@ Within that framework I often played the **“integrator” role** – making su
 
 ## Demo
 
-You can **watch a short demo of the NotMoodle LMS** here:
+You can **watch short demos of the NotMoodle LMS** here:
 
-- [Project demo (mp4, root of this repo)](demo_NotMoodle.mp4)
+- [Project demo (mp4)](https://drive.google.com/file/d/1IEYiaHdESkzElaRnT_lVPxgtUEioPg0w/view?usp=sharing)
+- [AI chatbot demo (mp4)](https://drive.google.com/file/d/1FI2sQiY3212dSaqGXifj2OHrr53_Ix2I/view?usp=drive_link)
 
 ## Retrospective report
 
