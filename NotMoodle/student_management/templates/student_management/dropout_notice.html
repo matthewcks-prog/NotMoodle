@@ -1,0 +1,82 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Account Status Notice • NotMoodle</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .notice-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-width: 500px;
+      text-align: center;
+    }
+    .notice-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    .notice-title {
+      color: #dc3545;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .notice-message {
+      color: #6c757d;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .contact-info {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 0 0.5rem;
+    }
+    .btn:hover {
+      background: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div class="notice-card">
+    <div class="notice-icon">⚠️</div>
+    <h1 class="notice-title">Account Status: Dropped Out</h1>
+    <p class="notice-message">
+      Hello {{ student.first_name }},<br><br>
+      Your student account is currently marked as "Dropped Out" and you cannot access courses or lessons at this time.
+    </p>
+    
+    <div class="contact-info">
+      <h3>Need Help?</h3>
+      <p>If you believe this is an error or would like to reactivate your account, please contact the administration office.</p>
+    </div>
+    
+    <div>
+      <a href="{% url 'welcome_page:welcome_page' %}" class="btn">Return to Home</a>
+      <a href="{% url 'student_management:student_logout' %}" class="btn">Logout</a>
+    </div>
+  </div>
+</body>
+</html>

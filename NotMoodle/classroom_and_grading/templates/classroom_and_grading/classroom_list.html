@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classrooms • NotMoodle{% endblock %}
+
+{% block nav_auth %}
+<div class="nav-auth">
+  <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+  <a class="signup" href="{% url 'teachersManagement:teacher_home' %}">Dashboard</a>
+  <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+</div>
+{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/logout_button.css' %}">
+  <style>
+    /* Background (same as courses pages) */
+    .blurred-background{
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; filter: blur(12px) brightness(.98);
+      transform: scale(1); z-index: -1;
+    }
+
+    /* Layout container */
+    .container-tight{ max-width: 1200px; margin: 0 auto; padding: 8px 0 28px; }
+
+    /* Glass look used across cards/filters/table */
+    .glass-card{
+      background: rgba(255,255,255,.28);
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+    }
+
+    /* Page title – white and spaced from bar below */
+    .title-text{
+      font-size:28px; font-weight:800; letter-spacing:.2px;
+      color:#fff; margin: 0 0 18px; text-shadow: 0 1px 3px rgba(0,0,0,.18);
+    }
+
+    /* Top bar with filters and create button */
+    .topbar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; }
+
+    /* Filters */
+    .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .filters input[type="text"], .filters select{
+      padding:10px 12px; border-radius:10px; border:1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.25); color:#111827; backdrop-filter: blur(8px); min-width: 260px;
+    }
+    .filters button.btn{ background: rgba(255,255,255,.22); color:#111827; border:1px solid rgba(255, 255, 255, 0.28); }
+
+    /* Buttons (match courses) */
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+      padding:10px 12px; border-radius:10px; font-weight:700;
+      text-decoration:none; transition:all .18s ease; border:1px solid transparent;
+      backdrop-filter: blur(8px);
+    }
+    .btn-primary{
+      background: rgba(118,147,218,1); color:#fff; border-color: rgba(118,147,218,1);
+      box-shadow: 0 8px 18px rgba(45,108,223,.28);
+    }
+    .btn-primary:hover{ filter:brightness(.96); transform: translateY(-1px); }
+    .btn-glass{
+      background: rgba(255,255,255,.16); color:#fff; border-color: rgba(255,255,255,.28);
+      box-shadow: 0 8px 18px rgba(0,0,0,.12);
+    }
+    .btn-glass:hover{ background: rgba(255,255,255,.22); transform: translateY(-1px); }
+
+    /* Table styling */
+    .table-wrap{ overflow:hidden; }
+    .table-glass{ background: rgba(255, 255, 255, 0.38); }
+    table{ border-collapse:collapse; width:100%; }
+    th, td{ border-bottom:1px solid rgba(255, 255, 255, 0.21); padding:12px; text-align:left; vertical-align:top; }
+    th{ font-weight:700; color:#fff; text-shadow: 0 1px 3px rgba(0,0,0,.18); }
+    td{ color:#1f2937; }
+
+    .action-buttons{ display:flex; gap:8px; }
+    .empty{ text-align:center; color:#fff; padding:16px; text-shadow:0 1px 2px rgba(0,0,0,.2); }
+    .pagination { display:flex; gap:8px; align-items:center; justify-content:flex-end; padding:12px; }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+  <div class="container-tight">
+    <h1 class="title-text">Classrooms</h1>
+
+    <div class="topbar">
+      <div class="filters glass-card" style="padding:10px;">
+        <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input type="text" name="q" value="{{ q }}" placeholder="Search classroom name/lesson…"/>
+          <button type="submit" class="btn btn-glass">Search</button>
+        </form>
+      </div>
+      <a href="{% url 'classroom_and_grading:classroom_create' %}" class="btn btn-primary">+ Create Classroom</a>
+    </div>
+
+    <div class="glass-card table-wrap">
+      <div class="table-glass">
+        {% if classrooms %}
+          <table>
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Lesson</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in classrooms %}
+                <tr>
+                  <td><strong style="color: rgba(118,147,218,1);">{{ c.course }}</strong></td>
+                  <td>
+                    <div style="font-weight:600;">{{ c.lesson }}</div>
+                  </td>
+                  <td>
+                    <div style="color:#6b7280; font-size:0.9rem;">{{ c.start_date|date:"Y-m-d" }}</div>
+                  </td>
+                  <td>
+                    <div style="color:#6b7280; font-size:0.9rem;">{{ c.end_date|date:"Y-m-d" }}</div>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <a href="{% url 'classroom_and_grading:classroom_detail' c.pk %}" class="btn btn-primary">Grade students</a>
+                      <form method="post" action="{% url 'classroom_and_grading:classroom_delete' c.pk %}" onsubmit="return confirm('Delete this classroom? This cannot be undone.');" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn" style="background:#dc3545;color:#fff;">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty">No classrooms found. Create your first classroom to get started.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Edit Course{% else %}Create Course{% endif %} • NotMoodle{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/teacher_form.css' %}">
+<style>
+  .blurred-background{
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; filter: blur(12px) brightness(.98);
+    transform: scale(1.06); z-index: -1;
+  }
+
+  .lf-shell{ max-width: 1100px; margin: 0 auto; padding: 10px 0 32px; }
+
+  .glass-card{
+    background: rgba(255,255,255,.28);
+    border: 1px solid rgba(255,255,255,.35);
+    box-shadow: 0 12px 30px rgba(0,0,0,.12);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+  }
+
+  .page-header{ display:flex; align-items:center; gap:12px; margin-bottom:14px; padding:12px 16px; }
+  .page-title{ margin:0; font-size:1.6rem; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.18); }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    padding:10px 14px; border-radius:10px; font-weight:700; text-decoration:none;
+    transition:all .18s ease; border:1px solid transparent; backdrop-filter: blur(8px);
+  }
+  .btn-primary{ background: rgba(118,147,218,1); color:#fff; border-color: rgba(118,147,218,1); box-shadow:0 8px 18px rgba(118, 147, 218, 1); }
+  .btn-primary:hover{ filter:brightness(.96); transform: translateY(-1px); }
+  .btn-glass{ background: rgba(255,255,255,.16); color:#fff; border-color: rgba(255,255,255,.28); box-shadow:0 8px 18px rgba(0,0,0,.12); }
+  .btn-glass:hover{ background: rgba(255,255,255,.22); transform: translateY(-1px); }
+
+  /* Form card */
+  .lf-card{ padding:18px; }
+  .lf-card.glassy{ /* just a hook to match lesson_form */ }
+
+  /* Make inputs look nice on glass */
+  .lf-card input[type="text"],
+  .lf-card input[type="number"],
+  .lf-card select,
+  .lf-card textarea{
+    width:100%; padding:10px 12px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.24); background:rgba(255, 255, 255, 0.65);
+    color:#111827;
+  }
+
+  .lf-label{ font-weight:700; color:#111827; margin-bottom:6px; display:block; }
+  .lf-row{ display:grid; gap:12px; grid-template-columns:1fr; }
+  @media (min-width: 820px){ .lf-row{ grid-template-columns: 1fr 1fr; } }
+
+  .lf-checkbox-panel{ background:rgba(255,255,255,.38); border:1px solid rgba(255,255,255,.35); border-radius:10px; padding:8px 10px; }
+
+  .lf-actions{ display:flex; gap:10px; justify-content:flex-end; }
+  .lf-btn{ /* keep existing teacher_form.css styles if any */ }
+</style>
+{% endblock %}
+
+{% block content %}
+<img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+<div class="lf-shell">
+  <header class="page-header glass-card">
+    <h1 class="page-title">{% if object %}Edit Course{% else %}Create Course{% endif %}</h1>
+    <div style="margin-left:auto; display:flex; gap:10px;">
+      <a class="btn btn-primary" href="{% url 'teacher_courses:teacher_course_list' %}">All Courses</a>
+    </div>
+  </header>
+
+  <form method="post" class="lf-card glass-card glassy">
+    {% csrf_token %}
+
+    <!-- Row 1: Code / Name -->
+    <div class="lf-row">
+      <div>
+        <label class="lf-label" for="{{ form.code.id_for_label }}">Course Code</label>
+        {{ form.code }} {{ form.code.errors }}
+      </div>
+      <div>
+        <label class="lf-label" for="{{ form.name.id_for_label }}">Course Name</label>
+        {{ form.name }} {{ form.name.errors }}
+      </div>
+    </div>
+
+    <!-- Row 2: Credits / Status -->
+    <div class="lf-row">
+      <div>
+        <label class="lf-label" for="{{ form.total_credits_required.id_for_label }}">Total Credits Required</label>
+        {{ form.total_credits_required }} {{ form.total_credits_required.errors }}
+      </div>
+      <div>
+        <label class="lf-label" for="{{ form.status.id_for_label }}">Status</label>
+        {{ form.status }} {{ form.status.errors }}
+      </div>
+    </div>
+
+    <!-- Director -->
+    <div>
+      <label class="lf-label" for="{{ form.director_name.id_for_label }}">Director</label>
+      {{ form.director_name }} {{ form.director_name.errors }}
+      <p class="lf-help" style="color: white;">If left empty, defaults to the teacher creating this course.</p>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="lf-label" for="{{ form.description.id_for_label }}">Description</label>
+      {{ form.description }} {{ form.description.errors }}
+    </div>
+
+    <!-- Core lessons -->
+    <div>
+      <label class="lf-label" for="{{ form.core_units.id_for_label }}">Core lessons</label>
+      <div class="lf-checkbox-panel">
+        {{ form.core_units }}
+      </div>
+      {{ form.core_units.errors }}
+      <p class="lf-help">Hold Ctrl/Cmd to select multiple lessons. These must be completed to finish the course.</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="lf-actions">
+      <a href="{% url 'teacher_courses:teacher_course_list' %}" class="btn btn-glass">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        {% if object %}Update Course{% else %}Create Course{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

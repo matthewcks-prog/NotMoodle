@@ -1,0 +1,327 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}NotMoodle{% endblock %}</title>
+  <meta name="theme-color" content="#ffffffbe">
+  {% block meta_description %}<meta name="description" content="NotMoodle – Flexible, self‑paced learning." />{% endblock %}
+  {% block meta_canonical %}{% endblock %}
+  {% block meta_og %}{% endblock %}
+  {% block meta_twitter %}{% endblock %}
+  {% block head_extra %}{% endblock %}
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
+    /* Prevent any element from causing horizontal overflow */
+    * {
+      max-width: 100%;
+    }
+    
+    :root {
+      --brand: #7693da;
+      --brand-dark: #7693da;
+      --bg: #e5e7eb6b;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --surface: #e5e7eb6b;
+      --border: #e5e7eb6b;
+    }
+
+    html, body { 
+      height: 100%; 
+      overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .navbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: static; /* let content scroll naturally under/over without being hidden */
+      z-index: 50;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-wrap {
+      width: 100%;
+      max-width: 100vw;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      box-sizing: border-box;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1.4rem;
+    }
+    .brand img { width: 50px; height: 50px; object-fit: contain; }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      margin-left: 16px;
+    }
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    .nav-links a:hover { 
+      background: #f3f4f6; 
+      transform: translateY(-1px);
+    }
+
+    .nav-spacer { flex: 1; }
+    /* Medium screens: allow navbar to wrap cleanly */
+    @media (max-width: 1024px) {
+      .nav-wrap {
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 22px 32px;
+      }
+      .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 14px;
+        margin-left: 0;
+      }
+      .nav-auth {
+        order: 2;
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      main {
+        padding-top: 72px;
+      }
+    }
+
+
+    .nav-auth a {
+      text-decoration: none;
+      font-weight: 700;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    .nav-auth .login { 
+      color: var(--text); 
+    }
+    .nav-auth .login:hover {
+      background: #f3f4f6;
+      transform: translateY(-1px);
+    }
+    .nav-auth .signup { 
+      background: var(--brand); 
+      color: white; 
+      box-shadow: 0 4px 12px rgba(45, 108, 223, 0.3);
+    }
+    .nav-auth .signup:hover { 
+      background: var(--brand-dark); 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(45, 108, 223, 0.4);
+    }
+
+    @media (max-width: 768px) { 
+      .navbar { position: static; box-shadow: none; }
+      .nav-wrap { 
+        flex-wrap: wrap; 
+        gap: 12px; 
+        padding: 20px 32px;
+      } 
+      .nav-links { 
+        flex-wrap: wrap; 
+        gap: 12px; 
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+        margin-top: 4px;
+      } 
+      .nav-auth { 
+        width: 100%; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        gap: 10px; 
+        flex-wrap: wrap;
+        order: 2;
+        margin-top: 4px;
+      }
+      .brand {
+        order: 1;
+        font-size: 1.2rem;
+      }
+      .brand img {
+        width: 42px;
+        height: 42px;
+      }
+      main { 
+        padding: 32px 32px 48px; /* navbar scrolls with content on small screens */
+      }
+      .nav-links a {
+        padding: 12px 18px;
+        font-size: 1.05rem;
+      }
+      .nav-auth a {
+        padding: 12px 20px;
+        font-size: 1.05rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar { position: static; box-shadow: none; }
+      .nav-wrap {
+        padding: 16px 20px;
+        gap: 10px;
+      }
+      .nav-links {
+        gap: 10px;
+      }
+      .nav-links a {
+        padding: 10px 16px;
+        font-size: 1rem;
+      }
+      .nav-auth a {
+        padding: 10px 14px;
+        font-size: 0.95rem;
+      }
+      .brand img {
+        width: 38px;
+        height: 38px;
+      }
+      .brand span {
+        font-size: 1.1rem;
+      }
+      main {
+        padding: 28px 20px 40px;
+      }
+      footer {
+        padding: 24px 28px;
+      }
+    }
+
+    /* Ultra-small devices: hide greeting to preserve primary actions */
+    @media (max-width: 380px) {
+      .nav-auth a:first-child { display: none; }
+      .nav-auth { justify-content: space-between; }
+    }
+
+    main {
+      width: 100%;
+      max-width: 100vw;
+      padding: 40px 48px 60px;
+      flex: 1;
+      box-sizing: border-box;
+    }
+
+    .messages { list-style: none; padding: 0; margin: 16px 0; }
+    .messages li.success { background:#ecfdf5; border:1px solid #bbf7d0; color:#166534; }
+    .messages li.error   { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+    .messages li.info    { background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; }
+    .messages li { background: #eef2ff; border: 1px solid #e0e7ff; color: #1e3a8a; padding: 8px 12px; margin-bottom: 8px; border-radius: 8px; }
+
+    footer {
+      display: flex;                  /* center horizontally & vertically */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 32px 48px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.95rem;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar" role="navigation" aria-label="Primary">
+    <div class="nav-wrap">
+      <a class="brand" href="{% url 'welcome_page:welcome_page' %}">
+        <img src="{% static 'img/logos.png' %}" alt="NotMoodle logo" />
+
+      </a>
+      <nav class="nav-links">
+        <a href="{% url 'welcome_page:welcome_page' %}">Home</a>
+        <a href="{% url 'welcome_page:courses' %}">Courses</a>
+        <a href="{% url 'welcome_page:news' %}">News</a>
+        <a href="{% url 'welcome_page:about' %}">About</a>
+        <a href="{% url 'welcome_page:contact' %}">Contact</a>
+      </nav>
+      <div class="nav-spacer"></div>
+      {% block nav_auth %}
+        <div class="nav-auth">
+          {% if request.user.is_authenticated %}
+            <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+            {% if request.user.teacher_profile %}
+              <a class="signup" href="{% url 'teachersManagement:teacher_home' %}">Dashboard</a>
+              <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+            {% elif request.user.student %}
+              <a class="signup" href="{% url 'student_management:student_dashboard' %}">Dashboard</a>
+              <a class="login" href="{% url 'student_management:student_logout' %}">Logout</a>
+            {% else %}
+              <a class="signup" href="/admin/">Admin Panel</a>
+              <a class="login" href="{% url 'student_management:student_logout' %}">Logout</a>
+            {% endif %}
+          {% else %}
+            <a class="login" href="{% url 'welcome_page:login' %}">Login</a>
+            <a class="signup" href="{% url 'welcome_page:student_signup' %}">Sign up</a>
+          {% endif %}
+        </div>
+      {% endblock %}
+    </div>
+  </div>
+
+  <main id="main" role="main">
+
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <div>© {{ now|date:"Y" }} NotMoodle (BackLog busters). All rights reserved.</div>
+  </footer>
+  {% block scripts_extra %}{% endblock %}
+</body>
+</html>

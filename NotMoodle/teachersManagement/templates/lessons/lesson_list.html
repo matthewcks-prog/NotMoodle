@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lessons • NotMoodle{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/logout_button.css' %}">
+  <style>
+    /* Background (same as courses pages) */
+    .blurred-background{
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; filter: blur(12px) brightness(.98);
+      transform: scale(1); z-index: -1;
+    }
+
+    /* Layout container */
+    .container-tight{ max-width: 1200px; margin: 0 auto; padding: 8px 0 28px; }
+
+    /* Glass look used across cards/filters/table */
+    .glass-card{
+      background: rgba(255,255,255,.28);
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+    }
+
+    /* Page title – white and spaced from bar below */
+    .title-text{
+      font-size:28px; font-weight:800; letter-spacing:.2px;
+      color:#fff; margin: 0 0 18px; text-shadow: 0 1px 3px rgba(0,0,0,.18);
+    }
+
+    .topbar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; }
+
+    /* Filters bar */
+    .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .filters input[type="text"],
+    .filters select{
+      padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.24);
+      background: rgba(255,255,255,.25); color:#111827;
+      backdrop-filter: blur(8px); min-width:260px;
+    }
+
+    /* Buttons (match courses) */
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+      padding:10px 12px; border-radius:10px; font-weight:700;
+      text-decoration:none; transition:all .18s ease; border:1px solid transparent;
+      backdrop-filter: blur(8px);
+    }
+    .btn-glass{
+      background: rgba(255,255,255,.16); color:#fff; border-color: rgba(255,255,255,.28);
+      box-shadow: 0 8px 18px rgba(0,0,0,.12);
+    }
+    .btn-glass:hover{ background: rgba(255,255,255,.22); transform: translateY(-1px); }
+    .btn-primary{
+      background: rgba(118,147,218,1); color:#fff; border-color: rgba(118,147,218,1);
+      box-shadow: 0 8px 18px rgba(45,108,223,.28);
+    }
+    .btn-primary:hover{ filter:brightness(.96); transform: translateY(-1px); }
+
+    /* Table on glass */
+    .table-wrap{ overflow:hidden; }
+    .table-glass{ background: rgba(255,255,255,.38); }
+    table{ border-collapse:collapse; width:100%; }
+    th, td{ border-bottom:1px solid rgba(255,255,255,.21); padding:12px; text-align:left; vertical-align:top; }
+    th{ font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.18); }
+    td{ color:#1f2937; }
+
+    .status-badge{ padding:4px 10px; border-radius:9999px; font-size:12px; font-weight:700; border:1px solid #e5e7eb77; display:inline-block; }
+    .status-published{ background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+    .status-draft{ background:#f3f4f6; color:#374151; border-color:#e5e7eb; }
+    .status-archived{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+
+    .action-buttons{ display:flex; gap:8px; }
+    .empty{ text-align:center; color:#fff; padding:16px; text-shadow:0 1px 2px rgba(0,0,0,.2); }
+    .pagination { display:flex; gap:8px; align-items:center; justify-content:flex-end; padding:12px; }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+  <div class="container-tight">
+    <h1 class="title-text">Lessons</h1>
+
+    <div class="topbar">
+      <div class="filters glass-card" style="padding:10px;">
+        <form method="get" id="searchForm" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="text" name="q" id="searchInput" value="{{ q }}" placeholder="Search unit code/title…" style="padding-right:35px;"/>
+            {% if q %}
+            <button type="button" id="clearSearch" style="position:absolute; right:8px; background:none; border:none; color:#6b7280; cursor:pointer; font-size:18px; padding:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center;" title="Clear search">&times;</button>
+            {% endif %}
+          </div>
+          <select name="status" id="statusFilter">
+            <option value="">All statuses</option>
+            <option value="draft" {% if status == "draft" %}selected{% endif %}>Draft</option>
+            <option value="published" {% if status == "published" %}selected{% endif %}>Published</option>
+            <option value="archived" {% if status == "archived" %}selected{% endif %}>Archived</option>
+          </select>
+          <button class="btn btn-glass" type="submit">Search</button>
+        </form>
+      </div>
+      <a class="btn btn-primary" href="{% url 'teachersManagement:lessons:new' %}">+ Create Lesson</a>
+    </div>
+
+    <div class="glass-card table-wrap">
+      <div class="table-glass">
+        {% if lessons %}
+          <table>
+            <thead>
+              <tr>
+                <th>Unit Code</th>
+                <th>Title</th>
+                <th>Video</th>
+                <th>Status</th>
+                <th>Credits</th>
+                <th>Effort (h/wk)</th>
+                <th>Prereqs</th>
+                <th>Designer</th>
+                <th>Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lesson in lessons %}
+                <tr>
+                  <td><strong style="color: rgba(118,147,218,1);">{{ lesson.unit_code }}</strong></td>
+                  <td>
+                    <div style="font-weight:600;">{{ lesson.title }}</div>
+                    <div style="color:#6b7280; font-size:0.9rem; max-width:260px;">{{ lesson.description|truncatewords:12|default:"No description" }}</div>
+                  </td>
+                  <td>
+                    {% if lesson.youtube_link %}
+                      <img src="{{ lesson.get_youtube_thumbnail|default:lesson.youtube_thumbnail }}" alt="thumb" style="width:96px; height:54px; object-fit:cover; border-radius:6px; border:1px solid #e5e7eb;" onerror="this.style.display='none'">
+                    {% else %}
+                      <span style="color:#6b7280; font-size:0.9rem;">No video</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="status-badge status-{{ lesson.status }}">
+                      {{ lesson.get_status_display }}
+                    </span>
+                  </td>
+                  <td><span style="font-weight:600;">{{ lesson.lesson_credits }}</span></td>
+                  <td><span style="font-weight:600;">{{ lesson.estimated_effort }}</span></td>
+                  <td><span style="font-weight:600;">{{ lesson.prereq_cnt }}</span></td>
+                  <td>
+                    <div style="color:#6b7280; font-size:0.9rem;">
+                      {{ lesson.lesson_designer.user.get_full_name|default:lesson.lesson_designer.user.username }}
+                    </div>
+                  </td>
+                  <td>
+                    <div style="color:#6b7280; font-size:0.9rem;">{{ lesson.date_of_update|date:"Y-m-d H:i" }}</div>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <a href="{% url 'teachersManagement:lessons:edit' lesson.pk %}" class="btn btn-primary">Edit</a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty">No lessons found. Create your first lesson to get started.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a class="btn btn-glass" href="?q={{ q }}&status={{ status }}&page={{ page_obj.previous_page_number }}">Prev</a>
+        {% endif %}
+        <span style="color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.25);">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a class="btn btn-glass" href="?q={{ q }}&status={{ status }}&page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Live search with debouncing (waits 500ms after user stops typing)
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchForm = document.getElementById('searchForm');
+    const clearBtn = document.getElementById('clearSearch');
+
+    function debounceSearch() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchForm.submit();
+      }, 500); // Wait 500ms after user stops typing
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', debounceSearch);
+    }
+
+    if (statusFilter) {
+      statusFilter.addEventListener('change', () => {
+        searchForm.submit();
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchForm.submit();
+      });
+    }
+  </script>
+{% endblock %}

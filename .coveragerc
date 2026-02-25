@@ -1,0 +1,64 @@
+# Coverage Configuration
+# ======================
+
+[run]
+# Enable branch coverage (not just line coverage)
+branch = True
+
+# Source directories to measure
+source = NotMoodle
+
+# Omit certain files/directories from coverage measurement
+omit =
+    # Migrations
+    */migrations/*
+    
+    # Tests themselves
+    */tests/*
+    */tests.py
+    **/test_*.py
+    
+    # Django boilerplate
+    manage.py
+    */wsgi.py
+    */asgi.py
+    
+    # Settings files
+    */settings*.py
+    
+    # Virtual environments
+    */venv/*
+    */virtualenv/*
+    */.venv/*
+    
+    # Third-party
+    */site-packages/*
+    
+    # Cache
+    */__pycache__/*
+    */.*
+
+[report]
+# Display missing lines in the terminal report
+show_missing = True
+
+# Don't skip covered files
+skip_covered = False
+
+# Precision for coverage percentage
+precision = 2
+
+# Fail if coverage is below threshold (optional)
+# fail_under = 90
+
+# Sort report by coverage percentage
+sort = Cover
+
+[html]
+# HTML report output directory
+directory = htmlcov
+
+[xml]
+# XML report output file (for CI/CD)
+output = coverage.xml
+

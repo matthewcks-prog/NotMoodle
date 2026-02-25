@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+  {% block title %}Teacher's Dashboard • NotMoodle{% endblock %}
+  {% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/teacher-dashboard.css' %}">
+  {% endblock %}
+
+
+  {% block nav_auth %}
+  <div class="nav-auth">
+    <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+    <a class="signup" href="{% url 'welcome_page:welcome_page' %}">NotMoodle website</a>
+    <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+  </div>
+{% endblock %}
+
+
+{% block content %}
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+  <main class="container">
+    <section class="grid">
+      <article class="card card-lg">
+        <h3>Totals</h3>
+        <div id="teacher_stats" class="teacher_stats">
+
+        <div class="stat-card">
+          <div class="metric-value">{{ context_json.metrics.students|default:0 }}</div>
+          <span class="metric-label">Students</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="metric-value"><span>{{ context_json.metrics.courses|default:0 }}</span></div>
+          <span class="metric-label">Courses</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="metric-value">{{ context_json.metrics.totalLessons|default:0 }}</div>
+          <span class="metric-label">Lessons</span>
+        </div>
+
+      </div>
+      </article>
+      
+      <article class="card card-md">
+        <h3>Quick Actions</h3>
+        <div class="quick-actions">
+          <a href="{% url 'teacher_courses:course_create' %}" class="btn primary">Create Course</a>
+          <a href="{% url 'teachersManagement:lessons:new' %}" class="btn subtle">Create Lesson</a>
+          <a href="{% url 'teachersManagement:student_status_list' %}" class="btn subtle">Manage Students</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="teacher-overview">
+      <div class="card">
+        <h3>Teacher Overview</h3>
+        <div class="accordion" id="overview"></div>
+      </div>
+    </section>
+
+    <section class="general-actions">
+      <div class="card">
+        <h3>General Actions</h3>
+        <div class="general-actions-grid">
+          <div class="action-item">
+            <h4>Manage Lessons</h4>
+            <p>View and manage all available lessons</p>
+            <a href="{% url 'teachersManagement:lessons:list' %}" class="btn primary">Manage Lessons</a>
+          </div>
+          <div class="action-item">
+            <h4>Manage Courses</h4>
+            <p>View and manage all courses</p>
+            <a href="{% url 'teacher_courses:teacher_course_list' %}" class="btn primary">Manage Courses</a>
+          </div>
+          <div class="action-item">
+            <h4>Manage Enrollments</h4>
+            <p>Enroll/unenroll students in courses</p>
+            <a href="{% url 'teacher_courses:enrollment_management' %}" class="btn primary">Manage Enrollments</a>
+          </div>
+          <div class="action-item">
+            <h4>Manage Student Status</h4>
+            <p>Change student enrollment status</p>
+            <a href="{% url 'teachersManagement:student_status_list' %}" class="btn primary">Manage Student Status</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <article class="card card-grading">
+      <h3>Classrooms & Grading</h3>
+      <p style="color: var(--secondary); margin-bottom: 1rem;">
+        View and manage all classrooms, assignments, and grading activities.
+      </p>
+      <a href="{% url 'classroom_and_grading:classroom_list' %}" class="btn primary">
+        🏫 Manage Classrooms
+      </a>
+    </article>
+  </main>
+{% endblock %}
+
+
+
+
+
+
+{% block scripts_extra %}
+  {{ context_json|json_script:"teacher-context" }}
+  {% csrf_token %}
+  <script>
+  // Accordion item factory
+  function makeAccordionItem(title, courseStatus, innerNode) {
+    const item = document.createElement('div');
+    item.className = 'accordion-item'; //course -> lessons -> students
+    item.innerHTML = `
+      <div class="accordion-header" role="button">
+        <span><strong>${title}</strong>${courseStatus}</span>
+        <span class="caret">▸</span>
+      </div>
+      <div class="accordion-content"></div>`;
+    const header = item.querySelector('.accordion-header');
+    header.addEventListener('click', () => {
+      const open = item.classList.toggle('open');
+    });
+
+    item.querySelector('.accordion-content').appendChild(innerNode);
+    return item;
+  }
+
+  (function render() {
+    const ctxEl = document.getElementById('teacher-context');
+    const context = JSON.parse(ctxEl.textContent);
+   
+
+    const overview = document.getElementById('overview'); //accordion
+
+    context.courses.forEach(course => {
+      const courseStatus = `<span class="pill neutral">${course.status}</span> <span class="muted small">• ${course.enrolledCount || 0} enrolled</span>`;
+
+      // Students block (course-level view)
+      const studentsWrap = document.createElement('div');
+      studentsWrap.className = 'students-wrap';
+
+      // Enhanced students table with detailed progress across all lessons
+      const rows = (course.students || []).map(s => `
+        <tr>
+          <td>
+            <div class="student-info">
+              <div class="student-name">${s.name}</div>
+              <div class="student-details">
+                <span class="student-id">ID: ${s.enrollment_number || 'N/A'}</span>
+                ${s.email ? `<span class="student-email">• ${s.email}</span>` : ''}
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="progress-container">
+              <div class="progress"><span style="width:${s.progressPct}%"></span></div>
+              <span class="muted small">${s.progressPct}%</span>
+            </div>
+          </td>
+          <td>
+            <div class="marks-container">
+              <div class="marks-display">
+                <span class="marks-earned">${s.earned_marks || 0}</span>
+                <span class="marks-separator">/</span>
+                <span class="marks-total">${s.total_marks || 0}</span>
+              </div>
+              <div class="percentage-display ${s.passed ? 'passed' : 'failed'}">
+                ${s.weighted_percentage || 0}%
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="credits-display">
+              <span class="credits-value">${s.credits}</span>
+              <span class="credits-label">credits</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn subtle btn-sm" onclick="generateStudentReport(${s.id}, '${s.name}', '${course.title}', '${course.code}', ${course.total_credits_required}, ${JSON.stringify(s).replace(/"/g, '&quot;')})">
+                📊 Generate Report
+              </button>
+            </div>
+          </td>
+        </tr>`).join('');
+
+      const studentBlock = document.createElement('div');
+      studentBlock.className = 'student-block';
+      studentBlock.innerHTML = `
+        <div class="student-row">
+          <div class="student-title"><strong>Course Students</strong> <span class="muted">• ${course.students.length} enrolled</span></div>
+        </div>
+        <div class="table-wrap">
+          <table class="table compact">
+            <thead><tr><th>Student</th><th>Progress</th><th>Marks</th><th>Credits</th><th>Actions</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+      studentsWrap.appendChild(studentBlock);
+
+      const item = makeAccordionItem(course.title, courseStatus, studentsWrap);
+      overview.appendChild(item);
+    });
+  })();
+
+  // Generate PDF report for student progress
+  function generateStudentReport(studentId, studentName, courseTitle, courseCode, totalCreditsRequired, studentData) {
+    // Create a detailed report data structure for course-level progress
+    const reportData = {
+      student: {
+        id: studentId,
+        name: studentName,
+        email: studentData.email,
+        enrollment_number: studentData.enrollment_number
+      },
+      course: {
+        title: courseTitle,
+        code: courseCode,
+        total_credits_required: totalCreditsRequired
+      },
+      progress: {
+        percentage: studentData.progressPct,
+        credits: studentData.credits
+      },
+      assignments: {
+        total: studentData.total_assignments,
+        graded: studentData.graded_assignments,
+        details: studentData.lesson_details || [], // Array of lesson details
+        total_marks: studentData.total_marks,
+        earned_marks: studentData.earned_marks,
+        weighted_percentage: studentData.weighted_percentage,
+        passed: studentData.passed
+      },
+      generated_at: new Date().toLocaleString()
+    };
+
+    // Send data to server to generate PDF
+    fetch('/teachers/generate-student-report/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(reportData)
+    })
+    .then(response => {
+      if (response.ok) {
+        return response.blob();
+      }
+      throw new Error('Failed to generate report');
+    })
+    .then(blob => {
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Student_Report_${studentName.replace(/\s+/g, '_')}_${courseTitle.replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    })
+    .catch(error => {
+      console.error('Error generating report:', error);
+      alert('Failed to generate report. Please try again.');
+    });
+  }
+  </script>
+{% endblock %}

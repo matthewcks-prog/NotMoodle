@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} Lesson • NotMoodle{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/lesson_form.css' %}">
+  <style>
+    /* Background (same vibe as student status pages) */
+    .blurred-background{
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; filter: blur(12px) brightness(.98);
+      transform: scale(1.06); z-index: -1;
+    }
+
+    /* Page shell */
+    .lf-shell { max-width: 1100px; margin: 0 auto; padding: 8px 0 32px; }
+
+    /* Glassy containers & header */
+    .glass-card{
+      background: rgba(255,255,255,.28);
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+    }
+    .page-header{
+      display:flex; align-items:center; gap:12px; margin-bottom: 14px;
+      padding: 12px 16px;
+    }
+    .page-header .title{
+      margin: 0; font-size: 1.6rem; font-weight: 800; color:#fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.18);
+    }
+
+    /* Buttons – translucent like student status */
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+      padding:10px 14px; border-radius: 10px; font-weight: 700;
+      text-decoration:none; transition: all .18s ease; border: 1px solid transparent;
+      backdrop-filter: blur(8px);
+    }
+    .btn-glass{
+      background: rgba(255,255,255,.16); color:#fff; border-color: rgba(255,255,255,.28);
+      box-shadow: 0 8px 18px rgba(0,0,0,.12);
+    }
+    .btn-glass:hover{ background: rgba(255,255,255,.22); transform: translateY(-1px); }
+    .btn-primary{
+      background: rgba(118, 147, 218, 1); color:#fff; border-color: rgba(118, 147, 218, 1);
+      box-shadow: 0 8px 18px rgba(45,108,223,.28);
+    }
+    .btn-primary:hover{ filter: brightness(.96); transform: translateY(-1px); }
+    .btn-ghost{
+      background: rgba(255,255,255,.14); color:#111827; border-color: rgba(255,255,255,.28);
+    }
+
+    /* Card that wraps the form */
+    .lf-card.glassy { padding: 18px; }
+
+    /* Notification cards */
+    .notification-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(0,0,0,.15);
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .notification-success {
+      background: rgba(220, 252, 231, 0.95);
+      border: 2px solid #86efac;
+      color: #166534;
+    }
+    
+    .notification-error {
+      background: rgba(254, 242, 242, 0.95);
+      border: 2px solid #fca5a5;
+      color: #991b1b;
+    }
+    
+    .notification-warning {
+      background: rgba(254, 249, 195, 0.95);
+      border: 2px solid #fde047;
+      color: #854d0e;
+    }
+    
+    .notification-info {
+      background: rgba(224, 231, 255, 0.95);
+      border: 2px solid #a5b4fc;
+      color: #3730a3;
+    }
+    
+    .notification-icon {
+      font-size: 1.5rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    
+    .notification-text {
+      flex: 1;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <!-- Blurred background -->
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+  <div class="lf-shell">
+    <header class="page-header glass-card">
+      <h1 class="title">
+        {% if object %}Edit{% else %}Create{% endif %} Lesson
+      </h1>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <a class="btn btn-primary" href="{% url 'teachersManagement:lessons:list' %}">All Lessons</a>
+      </div>
+    </header>
+
+    {% if messages %}
+      <div style="margin-top: 16px;">
+        {% for message in messages %}
+          <div class="notification-card {% if message.tags %}notification-{{ message.tags }}{% endif %}">
+            {% if 'success' in message.tags %}
+              <span class="notification-icon">✓</span>
+            {% elif 'error' in message.tags %}
+              <span class="notification-icon">✗</span>
+            {% elif 'warning' in message.tags %}
+              <span class="notification-icon">⚠</span>
+            {% else %}
+              <span class="notification-icon">ℹ</span>
+            {% endif %}
+            <span class="notification-text">{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="lf-card glass-card glassy" id="lesson-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="lf-row">
+        <div>
+          <label class="lf-label">Unit code</label>
+          {{ form.unit_code.errors }}
+          {{ form.unit_code }}
+        </div>
+        <div>
+          <label class="lf-label">Title</label>
+          {{ form.title.errors }}
+          {{ form.title }}
+        </div>
+      </div>
+
+      <div class="lf-row">
+        <div>
+          <label class="lf-label">Estimated effort (hrs/week)</label>
+          {{ form.estimated_effort.errors }}
+          {{ form.estimated_effort }}
+        </div>
+        <div>
+          <label class="lf-label">Status</label>
+          {{ form.status.errors }}
+          {{ form.status }}
+        </div>
+      </div>
+
+      <div>
+        <label class="lf-label">Description</label>
+        {{ form.description.errors }}
+        {{ form.description }}
+      </div>
+
+      <div>
+        <label class="lf-label">Objectives</label>
+        {{ form.objectives.errors }}
+        {{ form.objectives }}
+      </div>
+
+      <div>
+        <label class="lf-label">YouTube Video Link</label>
+        <p class="lf-help">Optional: Add a YouTube video URL for this lesson (e.g., https://www.youtube.com/watch?v=...)</p>
+        {{ form.youtube_link.errors }}
+        {{ form.youtube_link }}
+      </div>
+
+      <div>
+        <label class="lf-label">Prerequisites</label>
+        <p class="lf-help">Tick any that apply. You can leave all unticked.</p>
+        <div class="lf-checkbox-panel">
+          {{ form.prerequisites }}
+        </div>
+      </div>
+
+      <div>
+        <label class="lf-label">Lesson credits</label>
+        {{ form.lesson_credits.errors }}
+        {{ form.lesson_credits }}
+      </div>
+
+      {% if formset %}
+      <hr>
+      <h2 class="lf-subtitle">Reading list</h2>
+      {{ formset.management_form }}
+      <div id="reading-formset" class="lf-repeating">
+        {% for f in formset %}
+          <div class="lf-repeating-row" data-form-index="{{ forloop.counter0 }}">
+            <div style="font-weight:800; color:#fff; margin:6px 0 10px;">Item {{ forloop.counter }}</div>
+            {{ f.id }}
+            <div>
+              <label class="lf-label">Title</label>
+              {{ f.title.errors }}
+              {{ f.title }}
+            </div>
+            <div>
+              <label class="lf-label">URL</label>
+              {{ f.url.errors }}
+              {{ f.url }}
+            </div>
+            <div>
+              <label class="lf-label">Description</label>
+              {{ f.description.errors }}
+              {{ f.description }}
+            </div>
+            <div>
+              <label class="lf-label">Order</label>
+              {{ f.order.errors }}
+              {{ f.order }}
+            </div>
+            {% if object and f.DELETE %}
+              <div>
+                <label class="lf-label">Delete</label>
+                {{ f.DELETE }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <template id="reading-empty-form">
+        <div class="lf-repeating-row" data-form-index="__prefix__">
+          <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">
+          <div>
+            <label class="lf-label">Title</label>
+            <input type="text" name="{{ formset.prefix }}-__prefix__-title" id="id_{{ formset.prefix }}-__prefix__-title">
+          </div>
+          <div>
+            <label class="lf-label">URL</label>
+            <input type="url" name="{{ formset.prefix }}-__prefix__-url" id="id_{{ formset.prefix }}-__prefix__-url">
+          </div>
+          <div>
+            <label class="lf-label">Description</label>
+            <textarea name="{{ formset.prefix }}-__prefix__-description" id="id_{{ formset.prefix }}-__prefix__-description"></textarea>
+          </div>
+          <div>
+            <label class="lf-label">Order</label>
+            <input type="number" name="{{ formset.prefix }}-__prefix__-order" id="id_{{ formset.prefix }}-__prefix__-order" value="0">
+          </div>
+        </div>
+      </template>
+
+      <div>
+        <button type="button" class="lf-btn lf-btn--secondary btn btn-glass" id="add-reading-btn">Add reading</button>
+      </div>
+      {% endif %}
+
+      {% if assignment_formset %}
+      <hr>
+      <h2 class="lf-subtitle">Assignments</h2>
+      
+      {% if assignment_formset.non_form_errors %}
+        <div class="notification-card notification-error">
+          <span class="notification-icon">✗</span>
+          <span class="notification-text">{{ assignment_formset.non_form_errors }}</span>
+        </div>
+      {% endif %}
+      
+      {{ assignment_formset.management_form }}
+      <div id="assignment-formset" class="lf-repeating">
+        {% for f in assignment_formset %}
+          <div class="lf-repeating-row" data-form-index="{{ forloop.counter0 }}">
+            <div style="font-weight:800; color:#fff; margin:6px 0 10px;">Assignment {{ forloop.counter }}</div>
+            
+            {% if f.non_field_errors %}
+              <div class="notification-card notification-error" style="margin-bottom: 10px;">
+                <span class="notification-icon">✗</span>
+                <span class="notification-text">{{ f.non_field_errors }}</span>
+              </div>
+            {% endif %}
+            
+            {{ f.id }}
+            <div>
+              <label class="lf-label">Title</label>
+              {{ f.title.errors }}
+              {{ f.title }}
+            </div>
+            <div class="lf-row">
+              <div>
+                <label class="lf-label">Release Date</label>
+                {{ f.release_date.errors }}
+                {{ f.release_date }}
+              </div>
+              <div>
+                <label class="lf-label">Due Date</label>
+                {{ f.due_date.errors }}
+                {{ f.due_date }}
+              </div>
+            </div>
+            <div class="lf-row">
+              <div>
+                <label class="lf-label">Marks</label>
+                {{ f.marks.errors }}
+                {{ f.marks }}
+              </div>
+              <div>
+                <label class="lf-label">Weightage (%)</label>
+                {{ f.weightage.errors }}
+                {{ f.weightage }}
+              </div>
+            </div>
+            <div>
+              <label class="lf-label">Description</label>
+              {{ f.description.errors }}
+              {{ f.description }}
+            </div>
+            <div>
+              <label class="lf-label">Assignment PDF</label>
+              {{ f.pdf.errors }}
+              {{ f.pdf }}
+              {% if f.instance.pdf %}
+                <div style="margin-top: 8px;">
+                  <small>Current file: <a href="{{ f.instance.pdf.url }}" target="_blank">{{ f.instance.pdf_filename }}</a></small>
+                </div>
+              {% endif %}
+            </div>
+            {% if object %}
+              <div>
+                <label class="lf-label">Attachments (PDF files)</label>
+                {% if f.instance.pk %}
+                  <div style="margin-bottom: 8px;">
+                    {% for attachment in f.instance.attachments.all %}
+                      <div style="padding: 4px 0;">
+                        📄 {{ attachment.filename }}
+                        <small>({{ attachment.uploaded_at|date:"Y-m-d H:i" }})</small>
+                      </div>
+                    {% empty %}
+                      <small class="muted">No attachments yet.</small>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <small class="lf-help">Note: To add PDF attachments, save the lesson first, then edit the assignment in the classroom view.</small>
+              </div>
+            {% endif %}
+            {% if object and f.DELETE %}
+              <div>
+                <label class="lf-label">Delete</label>
+                {{ f.DELETE }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <template id="assignment-empty-form">
+        <div class="lf-repeating-row" data-form-index="__prefix__">
+          <input type="hidden" name="{{ assignment_formset.prefix }}-__prefix__-id" id="id_{{ assignment_formset.prefix }}-__prefix__-id">
+          <div>
+            <label class="lf-label">Title</label>
+            <input type="text" name="{{ assignment_formset.prefix }}-__prefix__-title" id="id_{{ assignment_formset.prefix }}-__prefix__-title">
+          </div>
+          <div class="lf-row">
+            <div>
+              <label class="lf-label">Release Date</label>
+              <input type="datetime-local" name="{{ assignment_formset.prefix }}-__prefix__-release_date" id="id_{{ assignment_formset.prefix }}-__prefix__-release_date">
+            </div>
+            <div>
+              <label class="lf-label">Due Date</label>
+              <input type="datetime-local" name="{{ assignment_formset.prefix }}-__prefix__-due_date" id="id_{{ assignment_formset.prefix }}-__prefix__-due_date">
+            </div>
+          </div>
+          <div class="lf-row">
+            <div>
+              <label class="lf-label">Marks</label>
+              <input type="number" step="0.01" name="{{ assignment_formset.prefix }}-__prefix__-marks" id="id_{{ assignment_formset.prefix }}-__prefix__-marks">
+            </div>
+            <div>
+              <label class="lf-label">Weightage (%)</label>
+              <input type="number" step="0.01" min="0" max="100" name="{{ assignment_formset.prefix }}-__prefix__-weightage" id="id_{{ assignment_formset.prefix }}-__prefix__-weightage">
+            </div>
+          </div>
+          <div>
+            <label class="lf-label">Description</label>
+            <textarea name="{{ assignment_formset.prefix }}-__prefix__-description" id="id_{{ assignment_formset.prefix }}-__prefix__-description"></textarea>
+          </div>
+          <div>
+            <label class="lf-label">Assignment PDF</label>
+            <input type="file" accept=".pdf" name="{{ assignment_formset.prefix }}-__prefix__-pdf" id="id_{{ assignment_formset.prefix }}-__prefix__-pdf">
+          </div>
+        </div>
+      </template>
+      <div>
+        <button type="button" class="lf-btn lf-btn--secondary btn btn-glass" id="add-assignment-btn">Add assignment</button>
+      </div>
+      {% endif %}
+
+      <div class="lf-actions" style="display:flex; gap:10px; justify-content:flex-end;">
+        <a class="lf-btn lf-btn--ghost btn btn-glass" href="{% url 'teachersManagement:lessons:list' %}">Cancel</a>
+        <button type="submit" class="lf-btn lf-btn--primary btn btn-primary">Save</button>
+      </div>
+    </form>
+    {% if formset %}
+    <script>
+      (function(){
+        var container = document.getElementById('reading-formset');
+        var addBtn = document.getElementById('add-reading-btn');
+        if(!container || !addBtn) return;
+        var totalInput = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+        var emptyTemplate = document.getElementById('reading-empty-form');
+        function addForm(){
+          var index = parseInt(totalInput.value, 10);
+          var html = emptyTemplate.innerHTML.replaceAll('__prefix__', index);
+          var wrapper = document.createElement('div');
+          wrapper.innerHTML = html.trim();
+          var row = wrapper.firstChild;
+          row.setAttribute('data-form-index', index);
+          container.appendChild(row);
+          totalInput.value = index + 1;
+        }
+        addBtn.addEventListener('click', addForm);
+      })();
+    </script>
+    {% endif %}
+    {% if assignment_formset %}
+    <script>
+      (function(){
+        var container = document.getElementById('assignment-formset');
+        var addBtn = document.getElementById('add-assignment-btn');
+        if(!container || !addBtn) return;
+        var totalInput = document.getElementById('id_{{ assignment_formset.prefix }}-TOTAL_FORMS');
+        var emptyTemplate = document.getElementById('assignment-empty-form');
+        
+        function recalcWeightage() {
+          var weightageInputs = document.querySelectorAll('input[name$="-weightage"]:not([name*="__prefix__"])');
+          var sum = 0;
+          var deleteCheckboxes = document.querySelectorAll('input[name$="-DELETE"]');
+          
+          weightageInputs.forEach(function(inp, idx) {
+            // Skip if marked for deletion
+            var isDeleted = deleteCheckboxes[idx] && deleteCheckboxes[idx].checked;
+            if (!isDeleted) {
+              var v = parseFloat(inp.value);
+              if (!isNaN(v)) sum += v;
+            }
+          });
+          
+          // Display warning
+          var warningDiv = document.getElementById('weightage-warning');
+          if (!warningDiv) {
+            warningDiv = document.createElement('div');
+            warningDiv.id = 'weightage-warning';
+            warningDiv.style.cssText = 'padding:12px; margin:10px 0; border-radius:8px; font-weight:600;';
+            container.parentElement.insertBefore(warningDiv, addBtn.parentElement);
+          }
+          
+          if (sum > 100) {
+            warningDiv.textContent = '⚠️ Warning: Total weightage is ' + sum.toFixed(2) + '% (exceeds 100%). Please adjust assignment weightages.';
+            warningDiv.style.background = '#fee2e2';
+            warningDiv.style.color = '#991b1b';
+            warningDiv.style.border = '1px solid #f87171';
+          } else if (sum === 0) {
+            warningDiv.textContent = 'ℹ️ No weightage assigned yet. Total: 0%';
+            warningDiv.style.background = '#e0e7ff';
+            warningDiv.style.color = '#3730a3';
+            warningDiv.style.border = '1px solid #818cf8';
+          } else {
+            warningDiv.textContent = '✓ Total weightage: ' + sum.toFixed(2) + '% of 100%';
+            warningDiv.style.background = '#dcfce7';
+            warningDiv.style.color = '#166534';
+            warningDiv.style.border = '1px solid #86efac';
+          }
+          
+          console.log('Total weightage: ' + sum + '%');
+        }
+        
+        function addForm(){
+          var index = parseInt(totalInput.value, 10);
+          var html = emptyTemplate.innerHTML.replaceAll('__prefix__', index);
+          var wrapper = document.createElement('div');
+          wrapper.innerHTML = html.trim();
+          var row = wrapper.firstChild;
+          row.setAttribute('data-form-index', index);
+          container.appendChild(row);
+          totalInput.value = index + 1;
+          
+          // Bind weightage calculator to new inputs
+          var weightageInput = row.querySelector('input[name$="-weightage"]');
+          if (weightageInput) {
+            weightageInput.addEventListener('input', recalcWeightage);
+            weightageInput.addEventListener('change', recalcWeightage);
+          }
+          recalcWeightage();
+        }
+        
+        addBtn.addEventListener('click', addForm);
+        
+        // Bind weightage calculator to existing inputs
+        var existingWeightageInputs = document.querySelectorAll('input[name$="-weightage"]');
+        existingWeightageInputs.forEach(function(inp) {
+          inp.addEventListener('input', recalcWeightage);
+          inp.addEventListener('change', recalcWeightage);
+        });
+        
+        // Bind to DELETE checkboxes too
+        var deleteCheckboxes = document.querySelectorAll('input[name$="-DELETE"]');
+        deleteCheckboxes.forEach(function(cb) {
+          cb.addEventListener('change', recalcWeightage);
+        });
+        
+        recalcWeightage();
+        
+        // Form submission validation
+        var lessonForm = document.getElementById('lesson-form');
+        if (lessonForm) {
+          lessonForm.addEventListener('submit', function(e) {
+            var weightageInputs = document.querySelectorAll('input[name$="-weightage"]:not([name*="__prefix__"])');
+            var deleteCheckboxes = document.querySelectorAll('input[name$="-DELETE"]');
+            var sum = 0;
+            
+            weightageInputs.forEach(function(inp, idx) {
+              var isDeleted = deleteCheckboxes[idx] && deleteCheckboxes[idx].checked;
+              if (!isDeleted) {
+                var v = parseFloat(inp.value);
+                if (!isNaN(v)) sum += v;
+              }
+            });
+            
+            if (sum > 100) {
+              e.preventDefault();
+              alert('Total weightage cannot exceed 100%. Current total: ' + sum.toFixed(2) + '%\n\nPlease adjust assignment weightages before saving.');
+              return false;
+            }
+          });
+        }
+      })();
+    </script>
+    {% endif %}
+  </div>
+{% endblock content %}

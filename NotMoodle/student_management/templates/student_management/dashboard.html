@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ student.first_name }}'s Dashboard &bull; NotMoodle{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/student-dashboard.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .message-graduation {
+      font-size: 1.4em;
+      font-weight: bold;
+      text-align: center;
+      background-color: #4CAF50 !important;
+      color: white !important;
+      padding: 1rem !important;
+      margin: 0 0 2rem 0 !important;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+{% endblock %}
+
+{% block nav_auth %}
+  <div class="nav-auth">
+    <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+    <a class="signup" href="{% url 'welcome_page:welcome_page' %}">NotMoodle website</a>
+    <a class="login" href="{% url 'student_management:student_logout' %}">Logout</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <img class="blurred-background" src="{% static 'img/dashboard_background.jpg' %}" alt="">
+
+  <div class="page">
+    <main class="container">
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'graduation' in message.extra_tags %}
+            <div class="message message-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <!-- Course  -->
+      <section style="margin-top:0px; margin-bottom:28px;">
+        <div class="card course-card">
+          <div class="course-card-header">
+            <h3>My Course</h3>
+            <a href="{% url 'lessons:student_list' %}" class="enrol-button">Enrol in Lessons</a>
+          </div>
+
+          {% if enrollment and enrollment.course %}
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <h4 style="margin:0; font-size:1.6rem;">{{ enrollment.course.code }} &ndash; {{ enrollment.course.name }}</h4>
+              {% if enrollment.course.director_name %}
+                <div class="course-info-chip director">Director: {{ enrollment.course.director_name }}</div>
+              {% elif enrollment.course.director %}
+                <div class="course-info-chip director">Director: {{ enrollment.course.director.get_full_name }}</div>
+              {% else %}
+                <div class="course-info-chip director" style="opacity:0.85;">No director assigned</div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--muted);">
+              <h4>No Course Enrolled</h4>
+              <p>Enroll in a course to access lessons and track your progress.</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Core Lessons Checklist -->
+
+
+      <!-- Top grid -->
+      <section class="grid">
+        <!-- Credits -->
+        <article class="card card-lg">
+          <span class="credits-title">Credits</span>
+          <div class="donut-stack">
+            <div class="donut-wrap">
+              <canvas class="donut" id="creditsDonut" role="img"></canvas>
+              <div class="donut-center" id="creditsText">{{ credits.earned }} / {{ credits.required }} credits</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Upcoming -->
+        <article class="card card-sm">
+          <h3 class="upcoming-title">Upcoming Assignments</h3>
+          <div id="upcoming"></div>
+        </article>
+
+        <!-- Current Lessons -->
+        <article class="card card-md">
+          <h3 class="current-lessons-title">Current Lessons</h3>
+          <div id="currentLessons"></div>
+        </article>
+      </section>
+
+      <!-- Grades Section -->
+      <section style="margin-top:16px;">
+        <div class="card course-card">
+          <div class="course-card-header">
+            <h3>Grades</h3>
+          </div>
+          {% if grades_by_unit %}
+            {% for unit, grades in grades_by_unit.items %}
+              <div style="margin-bottom:18px;">
+                <h4 style="margin-bottom:6px;">Unit: {{ unit }}</h4>
+                <table style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:#f3f4f6;">
+                      <th style="padding:6px 10px; text-align:left;">Assignment</th>
+                      <th style="padding:6px 10px; text-align:left;">Grade</th>
+                      <th style="padding:6px 10px; text-align:left;">Feedback</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for g in grades %}
+                      <tr>
+                        <td style="padding:6px 10px; color:#ffffff;">{{ g.assignment.title }}</td>
+                        <td style="padding:6px 10px; color:#ffffff;">
+                          {% if g.marks_awarded is not None %}
+                            {{ g.marks_awarded }} / {{ g.assignment.marks }}
+                          {% else %}
+                            <span style="color:#9ca3af;">Not graded</span>
+                          {% endif %}
+                        </td>
+                        <td style="padding:6px 10px; color:#ffffff;">
+                          {% if g.feedback %}
+                            {{ g.feedback }}
+                          {% else %}
+                            <span style="color:#9ca3af;">No feedback</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div style="color: #000000; font-weight:600; padding:12px;">No grades available yet.</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Lessons (Active / Completed) -->
+      <section style="margin-top:16px;">
+        <div class="card course-card">
+          <div class="course-card-header">
+            <h3>Lessons</h3>
+          </div>
+          <div class="accordion" id="myCourseAccordion"></div>
+        </div>
+      </section>
+      {% if enrollment and enrollment.course %}
+      <section style="margin-bottom:28px;">
+        <div class="card course-card">
+          <div class="course-card-header">
+            <h3>Core Lessons Checklist</h3>
+            <span class="pill neutral" id="coreLessonsProgress">0 / 0 completed</span>
+          </div>
+          <div id="coreLessonsList">
+            <!-- Core lessons will be populated by JavaScript -->
+          </div>
+          <div style="margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+            <p style="margin: 0; font-weight: 600; color: #495057;">
+              <strong>Graduation Requirement:</strong> <span style="color: var(--muted);">Complete all core lessons above to graduate from {{ enrollment.course.code }}.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+      
+    </main>
+  </div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+  <script src="{% static 'js/charts.js' %}"></script>
+  {{ context_json|json_script:"context-data" }}
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const dataEl = document.getElementById('context-data');
+    const context = JSON.parse(dataEl.textContent || '{}');
+    const credits = context.credits || { earned: 0, required: 0 };
+
+    if (typeof renderCreditsDonut === "function") {
+      renderCreditsDonut('creditsDonut', credits.earned, credits.required, '#6787d6');
+    } else {
+      document.getElementById('creditsText').textContent = `${credits.earned} / ${credits.required} credits`;
+    }
+
+    const clWrap = document.getElementById('currentLessons');
+    (context.activeLessons || []).forEach(ls => {
+      const el = document.createElement('div');
+      el.style.marginBottom = '12px';
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <strong><a href="/lessons/student/${ls.id}/" style="color:inherit;text-decoration:none;">${ls.title}</a></strong>
+          <span style="color:var(--muted)">${ls.progressPct ?? 0}%</span>
+        </div>
+        <div class="progress"><span style="width:${ls.progressPct ?? 0}%;"></span></div>`;
+      clWrap.appendChild(el);
+    });
+
+    const up = document.getElementById('upcoming');
+    // Ensure no nested scrollbars on the upcoming list container
+    up.style.maxHeight = 'none';
+    up.style.overflowY = 'visible';
+    up.style.overflowX = 'hidden';
+    const upcomingList = context.upcoming || [];
+
+    if (upcomingList.length > 0) {
+      up.innerHTML = '';
+      upcomingList.forEach(item => {
+        const due = item.due ? new Date(item.due) : null;
+        const hours = due ? (due - new Date()) / 36e5 : Infinity;
+        let cls = 'neutral', txt = (due ? `Due in ${Math.round(hours/24)}d` : 'No due date');
+        if (due) {
+          if (hours < 24) { cls = 'red';   txt = `Due in ${Math.max(1, Math.round(hours))}h`; }
+          else if (hours < 72) { cls = 'amber'; txt = `Due in ${Math.round(hours/24)}d`; }
+        }
+        const el = document.createElement('div');
+        el.style.display = 'flex';
+        el.style.flexDirection = 'column';
+        el.style.gap = '6px';
+        el.style.marginBottom = '8px';
+        el.style.padding = '12px';
+        el.style.background = 'rgba(255,255,255,0.1)';
+        el.style.borderRadius = '8px';
+        el.style.border = '1px solid rgba(255,255,255,0.2)';
+        el.style.cursor = 'pointer';
+        el.style.transition = 'all 0.2s ease';
+        el.style.maxWidth = '100%';
+
+        // Make it clickable
+        el.onclick = () => {
+          window.location.href = `/lessons/student/${item.lesson_id}/`;
+        };
+
+        el.onmouseenter = () => {
+          el.style.background = 'rgba(255,255,255,0.18)';
+          el.style.transform = 'translateY(-2px)';
+        };
+
+        el.onmouseleave = () => {
+          el.style.background = 'rgba(255,255,255,0.1)';
+          el.style.transform = 'translateY(0)';
+        };
+
+        // Header row with title on left, badges on right (aligned and smaller)
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.alignItems = 'center';
+        header.style.justifyContent = 'space-between';
+        header.style.gap = '8px';
+        header.style.width = '100%';
+        header.style.minWidth = '0';
+
+        const title = document.createElement('strong');
+        title.textContent = item.title;
+        title.style.color = 'inherit';
+        title.style.flex = '1';
+        title.style.minWidth = '0';
+        title.style.overflow = 'hidden';
+        title.style.textOverflow = 'ellipsis';
+        title.style.whiteSpace = 'nowrap';
+
+        const badges = document.createElement('div');
+        badges.style.display = 'flex';
+        badges.style.alignItems = 'center';
+        badges.style.gap = '6px';
+        badges.style.flexShrink = '0';
+        
+        const duePill = document.createElement('span');
+        duePill.className = `pill small ${cls}`;
+        duePill.textContent = txt;
+        duePill.style.fontSize = '0.70rem';
+        duePill.style.whiteSpace = 'nowrap';
+
+        badges.appendChild(duePill);
+        header.appendChild(title);
+        header.appendChild(badges);
+
+        const meta = document.createElement('div');
+        meta.style.color = '#ffffff';
+        meta.style.fontSize = '.9em';
+        meta.innerHTML = `${item.lesson}${due ? ' &bull; Due: ' + due.toLocaleDateString() + ' ' + due.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`;
+
+        const worth = document.createElement('div');
+        worth.style.color = '#cbd5e1';
+        worth.style.fontSize = '0.85em';
+        worth.style.marginTop = '2px';
+        if (item.marks) worth.textContent = `Worth: ${item.marks} marks (${item.weightage}%)`;
+
+        el.appendChild(header);
+        el.appendChild(meta);
+        if (item.marks) el.appendChild(worth);
+        up.appendChild(el);
+      });
+    } else {
+      up.innerHTML = `<span style="color:#374151; font-weight:600;">No upcoming assessments.</span>`;
+    }
+
+    const acc = document.getElementById('myCourseAccordion');
+    const makeSection = (title, lessons, open=false) => {
+      const item = document.createElement('div');
+      item.className = 'accordion-item' + (open ? ' open' : '');
+      item.innerHTML = `
+        <div class="accordion-header">
+          <span><strong>${title}</strong> <span class="pill neutral" style="margin-left:8px;">${lessons.length}</span></span>
+          <span class="arrow">&#9656;</span>
+        </div>
+        <div class="accordion-content"></div>`;
+      const content = item.querySelector('.accordion-content');
+
+      if (!lessons.length) {
+        content.innerHTML = `<div class="small" style="color:#374151; font-weight:600;">You are not enrolled in any lessons yet.</div>`;
+      } else {
+        lessons.forEach(l => {
+          const pct = l.progressPct ?? (title.includes('Completed') ? 100 : 0);
+          const row = document.createElement('div');
+          row.style.padding = '8px 0';
+          row.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+              <div><strong><a href="/lessons/student/${l.id}/" style="color:inherit;text-decoration:none;">${l.title}</a></strong>
+              <span style="color:var(--muted)">&bull; ${l.credits ?? 0} cr</span></div>
+              <div style="min-width:220px;"><div class="progress"><span style="width:${pct}%;"></span></div></div>
+            </div>`;
+          content.appendChild(row);
+        });
+      }
+
+      const header = item.querySelector('.accordion-header');
+      header.addEventListener('click', () => {
+        const openNow = item.classList.toggle('open');
+        header.querySelector('.arrow').style.transform = openNow ? 'rotate(90deg)' : 'rotate(0deg)';
+      });
+      return item;
+    };
+
+    acc.appendChild(makeSection('Active Lessons', context.activeLessons || [], true));
+    acc.appendChild(makeSection('Completed Lessons', context.completedLessons || [], false));
+
+    // Core Lessons Checklist
+    const coreLessonsList = document.getElementById('coreLessonsList');
+    const coreLessonsProgress = document.getElementById('coreLessonsProgress');
+    const coreLessons = context.coreLessons || [];
+    
+    if (coreLessons.length > 0) {
+      let completedCount = 0;
+      
+      coreLessons.forEach(lesson => {
+        if (lesson.completed) completedCount++;
+        
+        const lessonItem = document.createElement('div');
+        lessonItem.style.display = 'flex';
+        lessonItem.style.alignItems = 'center';
+        lessonItem.style.justifyContent = 'space-between';
+        lessonItem.style.padding = '12px 0';
+        lessonItem.style.borderBottom = '1px solid #e9ecef';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = lesson.completed;
+        checkbox.disabled = true;
+        checkbox.style.marginRight = '12px';
+        checkbox.style.transform = 'scale(1.2)';
+        
+        const lessonInfo = document.createElement('div');
+        lessonInfo.style.flex = '1';
+        lessonInfo.innerHTML = `
+          <div style="font-weight: 600; margin-bottom: 4px;">
+            <a href="/lessons/student/${lesson.id}/" style="color: inherit; text-decoration: none;">
+              ${lesson.unit_code} - ${lesson.title}
+            </a>
+          </div>
+          <div style="color: #ffffff; font-size: 0.9em;">
+            ${lesson.credits} credits ${lesson.completed ? '• Completed' : '• In Progress'}
+          </div>
+        `;
+        
+        const progressInfo = document.createElement('div');
+        progressInfo.style.textAlign = 'right';
+        progressInfo.style.minWidth = '80px';
+        progressInfo.innerHTML = `
+          <div style="font-weight: 600; color: ${lesson.completed ? '#28a745' : 'var(--muted)'};">
+            ${lesson.percentage}%
+          </div>
+          <div style="color: var(--muted); font-size: 0.8em;">
+            ${lesson.completed ? 'Passed' : 'Pending'}
+          </div>
+        `;
+        
+        lessonItem.appendChild(checkbox);
+        lessonItem.appendChild(lessonInfo);
+        lessonItem.appendChild(progressInfo);
+        
+        coreLessonsList.appendChild(lessonItem);
+      });
+      
+      // Update progress counter
+      coreLessonsProgress.textContent = `${completedCount} / ${coreLessons.length} completed`;
+      coreLessonsProgress.className = `pill ${completedCount === coreLessons.length ? 'green' : completedCount > 0 ? 'amber' : 'neutral'}`;
+    } else {
+      coreLessonsList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--muted);">No core lessons defined for this course.</div>';
+    }
+  });
+  </script>
+
+  <!-- NotMoodle AI Assistant Widget -->
+  {% include 'assist/ai_assistant_widget.html' %}
+{% endblock %}

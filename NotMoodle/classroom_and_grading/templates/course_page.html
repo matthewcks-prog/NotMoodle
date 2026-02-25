@@ -1,0 +1,174 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Classroom • NotMoodle</title>
+  <link rel="stylesheet" href="{% static 'css/classroom.css' %}">
+</head>
+<body>
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="" aria-hidden="true">
+
+  <header class="header">
+    <div class="brand">
+      <img id="logo" src="{% static 'img/logos.png' %}" alt="NotMoodle" height="56" width="auto"/>
+      <h1>NotMoodle</h1>
+    </div>
+    <span class="teacher-badge">Classroom</span>
+    <a href="#" class="settings">Back</a>
+  </header>
+
+
+  <main class="container">
+    <section class="card">
+      <div class="card-head">
+        <h2> {{ fake_classroom.lesson.title }} ({{fake_classroom.lesson.code}})</h2>
+        <div class="classroom-info">Classroom ID: <span>{{ fake_classroom.id }}</span></div>
+      </div>
+
+      <div class="details-grid">
+        <div class="details-block">
+          <h3>Lesson Details</h3>
+          <div class="list">
+            <div class="row"><span class="label">Code</span><span class="data">{{ fake_classroom.lesson.code }}</span></div>
+            <div class="row"><span class="label">Title</span><span class="data">{{ fake_classroom.lesson.title }}</span></div>
+            <div class="row"><span class="label">Students</span><span class="data" id="lessonStudent">—</span></div>
+            </div>
+          </div>
+
+        <div class="details-block">
+          <h3>Classroom Details</h3>
+          <div class="list">
+            <div class="row"><span class="label">Creator</span><span class="data">{{ fake_classroom.creator }}</span></div>
+            <div class="row"><span class="label">Start</span><span class="data">{{ fake_classroom.start }}</span></div>
+            <div class="row"><span class="label">End</span><span class="data">{{ fake_classroom.end }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grade-card">
+      <div class="grades-head">
+        <h3>Grades</h3>
+        <div class="actions">
+          <button class="btn subtle" id="clearBtn" type="button">Clear</button>
+          <button class="btn primary" id="saveBtn" type="button">Save</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="gradesTable">
+            <thead>
+                <tr>
+                  <th>Student</th>
+                  {% for assignment in fake_classroom.assignments %}
+                    <th>{{ assignment }}</th>
+                  {% empty %}
+                    <th class="muted">No assignments</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for student in fake_classroom.lesson.students %}
+                  <tr>
+                    <td class="student-cell">{{ student }}</td>
+                    {% for assignment in fake_classroom.assignments %}
+                      <td>
+                        <div class="cell-flex">
+                        <input
+                          class="grade-input"
+                          name="grade_{{ student }}_{{ assignment }}"
+                          data-student="{{ student }}"
+                          data-assignment="{{ assignment }}"
+                          type="text"
+                          placeholder="e.g. 67">
+                        
+                          <button
+                          type="button"
+                          class="icon-btn"
+                          data-view
+                          data-student="{{ student }}"
+                          data-assignment="{{ assignment }}"
+                          aria-label="View {{ student }} — {{ assignment }}">
+                          <img class="view-icon" src="{% static 'img/view-icon.png' %}" alt="">
+                        </button>
+                      </div>
+                      </td>
+                    {% endfor %}
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td class="muted" colspan="{{ fake_classroom.assignments|length|add:'1' }}">No students enrolled.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+        </table>
+      </div>
+    </div>
+    </section>
+
+  </main>
+
+
+
+  <div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+  {{ fake_classroom|json_script:"classroom-data" }}
+
+  <script>
+  // Toast helper
+  function showToast(message, type='success', timeout=2200){
+    const wrap = document.getElementById('toast-wrap');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(6px)'; }, timeout-300);
+    setTimeout(()=> el.remove(), timeout);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const dataEl = document.getElementById('classroom-data');
+    const ctx = JSON.parse(dataEl.textContent);
+
+    document.getElementById('lessonStudent').textContent = ctx.lesson.students.length;
+
+
+    const tbl = document.getElementById('gradesTable');
+    const assignments = ctx.assignments || [];
+    const students = ctx.lesson.students || [];
+
+    // Make table comfortably scrollable on mobile if many assignments
+    const minWidth = 160 + assignments.length * 140; // px
+    tbl.style.minWidth = Math.max(minWidth, 560) + 'px';
+
+
+    // Clear Button Functionality
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      document.querySelectorAll('.grade-input').forEach(inp => {
+        if (!inp.disabled) inp.value = '';
+      });
+      showToast('Cleared inputs', 'success');
+    });
+
+    // Save (placeholder): collect values, disable non-empty as “final”
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const payload = {};
+      students.forEach(s => payload[s] = {});
+      document.querySelectorAll('.grade-input').forEach(inp => {
+        const s = inp.dataset.student;
+        const a = inp.dataset.assignment;
+        const v = inp.value.trim();
+        if (v) {
+          payload[s][a] = v;
+          // simulate final/immutable
+          inp.disabled = true;
+          inp.classList.add('final');
+        }
+      });
+      console.log('Grades payload (placeholder, not persisted):', payload);
+      showToast('Saved (placeholder). Fields locked as final.', 'success');
+    });
+  });
+  </script>
+</body>
+</html>

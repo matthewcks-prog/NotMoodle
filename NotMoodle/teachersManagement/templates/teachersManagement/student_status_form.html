@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Edit Student Status • NotMoodle{% endblock %}
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/edit_status.css' %}">  
+{% endblock %}
+
+{% block nav_auth %}
+<div class="nav-auth">
+  <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+  <a class="signup" href="{% url 'teachersManagement:teacher_home' %}"> ← Dashboard </a>
+  <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">Student Status Management</h2>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Student Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="student-info">
+                    <div class="student-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Student Name</div>
+                            <div class="detail-value">{{ student.full_name }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Enrollment Number</div>
+                            <div class="detail-value">{{ student.enrollment_number }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">{{ student.user.email }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Enrollment Date</div>
+                            <div class="detail-value">{{ student.date_enrolled|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Current Status</div>
+                            <div class="detail-value">
+                                <span class="status-badge status-{{ student.status }}">
+                                    {{ student.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="{{ form.status.id_for_label }}">New Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.status.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'teachersManagement:student_status_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

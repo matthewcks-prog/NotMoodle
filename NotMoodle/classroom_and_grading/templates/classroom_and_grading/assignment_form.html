@@ -1,0 +1,270 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% if object %}Edit Assignment{% else %}Create Assignment{% endif %} • NotMoodle</title>
+  <link rel="stylesheet" href="{% static 'css/classroom.css' %}">
+  <style>
+    .upload-box {
+      background: #a7d3ff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 1rem 1.2rem;
+      margin-top: 1rem;
+      position: relative;
+    }
+    .upload-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: .5rem;
+    }
+    .upload-head h4 { margin: 0; }
+    .upload-head .muted {
+      flex: 1 1 auto;
+      font-size: .85rem;
+      min-width: 180px;
+    }
+    .file-list { margin: .5rem 0 0; padding-left: 1rem; }
+    .file-list li {
+      margin: .25rem 0;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .file-size { color: #64748b; font-size: .85rem; }
+    .btn-tiny { font-size: .85rem; }
+    .muted { color: #64748b; }
+
+    /* hide only this input (uses the field id) */
+    #{{ attachment_form.file.id_for_label }} { display: none; }
+
+    #addMoreBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      z-index: 1;
+    }
+    #addMoreBtn:hover { background: #2563eb; }
+
+    .field-error ul {
+      margin: .25rem 0 0;
+      padding: 0;
+      list-style: none;
+      color: #b91c1c;
+      font-size: .875rem;
+    }
+  </style>
+</head>
+
+<body>
+  {% comment %} <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="" aria-hidden="true"> {% endcomment %}
+
+  <header class="header">
+    <div class="brand">
+      <img id="logo" src="{% static 'img/logos.png' %}" alt="NotMoodle" height="56" width="auto"/>
+      <h1>NotMoodle</h1>
+    </div>
+    <span class="teacher-badge">Assignment</span>
+    <a href="{% url 'classroom_and_grading:classroom_detail' classroom.pk %}" class="settings">Back</a>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="card-head">
+        <h2>{% if object %}Edit Assignment{% else %}Create Assignment{% endif %}</h2>
+        <div class="classroom-info">
+          For: <span>{{ classroom.course }}</span> • <span>{{ classroom.lesson }}</span>
+        </div>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" class="list">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="row">
+          <label class="label">Title</label>
+          <div class="data">
+            {{ form.title }}
+            <div class="field-error">{{ form.title.errors }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">Release Date</label>
+          <div class="data">
+            {{ form.release_date }}
+            <div class="field-error">{{ form.release_date.errors }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">Due Date</label>
+          <div class="data">
+            {{ form.due_date }}
+            <div class="field-error">{{ form.due_date.errors }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">Maximum Marks</label>
+          <div class="data">
+            {{ form.marks }}
+            <div class="field-error">{{ form.marks.errors }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">Weightage (%)</label>
+          <div class="data">
+            {{ form.weightage }}
+            <div class="field-error">{{ form.weightage.errors }}</div>
+            <small class="muted">Percentage contribution to total lesson marks (0-100%). Total of all assignments should equal 100%.</small>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">Description</label>
+          <div class="data">
+            {{ form.description }}
+            <div class="field-error">{{ form.description.errors }}</div>
+          </div>
+        </div>
+
+        <!-- PDF picker (add new PDFs) -->
+        <div class="upload-box">
+          <div class="upload-head">
+            <h4>Attach PDF files</h4>
+            <span class="muted">PDF only • Add and remove before submitting</span>
+          </div>
+
+          {{ attachment_form.file }}
+          {{ attachment_form.file.errors }}
+
+          <button type="button" id="addMoreBtn">+ Add PDF(s)</button>
+
+          <ul id="pickedList" class="file-list">
+            <li id="emptyPicked" class="muted">No PDFs selected yet.</li>
+          </ul>
+        </div>
+
+        {# Existing attachments (only visible on edit) #}
+        {% if existing_attachments %}
+          <div class="existing-attachments" style="margin-top:1rem;">
+            <h3>Existing files</h3>
+            <ul class="file-list">
+              {% for att in existing_attachments %}
+                <li>
+                  <label style="display:flex;gap:.5rem;align-items:center;">
+                    <input type="checkbox" name="remove_attachments" value="{{ att.id }}">
+                    Remove
+                  </label>
+                  <a href="{{ att.file.url }}" target="_blank" rel="noopener">
+                    {{ att.file.name }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="actions" style="margin-top:1rem; gap:10px;">
+          <button type="submit" class="btn primary">
+            {% if object %}Confirm{% else %}Create Assignment{% endif %}
+          </button>
+          <a href="{% url 'classroom_and_grading:classroom_detail' classroom.pk %}" class="btn subtle">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const fileInput   = document.getElementById('{{ attachment_form.file.id_for_label }}'); // hidden real input
+    const addMoreBtn  = document.getElementById('addMoreBtn');
+    const pickedList  = document.getElementById('pickedList');
+    const emptyPicked = document.getElementById('emptyPicked');
+
+    fileInput.setAttribute('accept','application/pdf');
+    fileInput.setAttribute('multiple','multiple');
+
+    // keep all added files
+    let stash = [];
+
+    function humanSize(bytes){
+      const u=['B','KB','MB','GB','TB']; let i=0, x=bytes;
+      while (x>=1024 && i<u.length-1){ x/=1024; i++; }
+      return x.toFixed(1)+' '+u[i];
+    }
+
+    function renderPicked(){
+      pickedList.querySelectorAll('li:not(#emptyPicked)').forEach(li=>li.remove());
+      if (stash.length === 0){ emptyPicked.style.display=''; return; }
+      emptyPicked.style.display='none';
+      stash.forEach((f, i)=>{
+        const li=document.createElement('li');
+        li.innerHTML=`
+          <span>${f.name}</span>
+          <span class="file-size">(${humanSize(f.size)})</span>
+          <button type="button" class="btn subtle btn-tiny" data-remove="${i}">Remove</button>
+        `;
+        pickedList.appendChild(li);
+      });
+    }
+
+    function syncInputFromStash(){
+      const dt = new DataTransfer();
+      stash.forEach(f=>dt.items.add(f));
+      fileInput.files = dt.files;
+    }
+
+    function addFiles(files){
+      Array.from(files).forEach(f=>{
+        const isPdf = (f.type==='application/pdf') || f.name.toLowerCase().endsWith('.pdf');
+        if (!isPdf) return;
+        const dup = stash.some(g=>g.name===f.name && g.size===f.size && g.lastModified===f.lastModified);
+        if (!dup) stash.push(f);
+      });
+      syncInputFromStash();
+      renderPicked();
+    }
+
+    addMoreBtn.addEventListener('click',(e)=>{
+      e.preventDefault();
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change',()=>{
+      if (fileInput.files && fileInput.files.length){
+        addFiles(fileInput.files);
+      }
+    });
+
+    pickedList.addEventListener('click',(e)=>{
+      const btn=e.target.closest('[data-remove]');
+      if (!btn) return;
+      const idx=parseInt(btn.dataset.remove,10);
+      if (!Number.isNaN(idx)){
+        stash.splice(idx,1);
+        syncInputFromStash();
+        renderPicked();
+      }
+    });
+
+    renderPicked();
+  </script>
+</body>
+</html>
+  

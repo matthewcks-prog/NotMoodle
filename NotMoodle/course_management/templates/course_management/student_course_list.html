@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Courses • NotMoodle{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* ----- blurred bubbles background ----- */
+  .page-bg{
+    position: fixed;
+    inset: 0;
+    background: url("{% static 'img/bubbles.jpg' %}") center/cover no-repeat;
+    filter: blur(12px) brightness(.9);
+    transform: scale(1.06);
+    z-index: -2;
+  }
+  .page-overlay{
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(255,255,255,.65));
+    z-index: -1;
+  }
+
+  .page-container {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .courses-header {
+    margin-bottom: 40px;
+  }
+  
+  .courses-header h1 {
+    margin: 0 0 20px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: var(--text);
+  }
+  
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+  
+  .course-card {
+    background: rgba(255,255,255,.82);               /* frosted */
+    border: 1px solid rgba(229,231,235,.75);
+    border-radius: 16px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-color: var(--brand);
+  }
+  
+  .course-header { padding: 20px 20px 0; }
+  .course-name { font-weight: 700; font-size: 1.2rem; color: var(--text); margin-bottom: 8px; }
+  .course-code { color: var(--muted); font-size: 0.95rem; font-weight: 500; }
+  .course-description { padding: 16px 20px; color: var(--muted); line-height: 1.6; }
+  
+  .course-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px 20px;
+    gap: 12px;
+  }
+  
+  .course-status {
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(229,231,235,.75);
+    background: rgba(255,255,255,.7);
+    color: var(--muted);
+    font-weight: 500;
+    backdrop-filter: blur(6px);
+  }
+  .course-status.active {
+    background: #e8f5e8;
+    color: #2d5a2d;
+    border-color: #c3e6c3;
+  }
+  
+  .enroll-btn {
+    background: var(--brand);
+    color: white;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(45, 108, 223, 0.3);
+    backdrop-filter: blur(6px);
+  }
+  .enroll-btn:hover {
+    background: var(--brand-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 108, 223, 0.4);
+  }
+  
+  .unavailable-btn {
+    background: rgba(255,255,255,.7);
+    color: var(--muted);
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    border: 1px solid rgba(229,231,235,.75);
+    backdrop-filter: blur(6px);
+  }
+  
+  .no-courses {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .courses-grid { grid-template-columns: 1fr; gap: 20px; }
+    .course-footer { flex-direction: column; align-items: stretch; gap: 12px; }
+    .course-status { text-align: center; }
+    .enroll-btn { text-align: center; }
+  }
+  
+  @media (max-width: 480px) {
+    .courses-header { margin-bottom: 32px; }
+    .course-header { padding: 16px 16px 0; }
+    .course-description { padding: 12px 16px; }
+    .course-footer { padding: 0 16px 16px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="page-bg"></div>
+  <div class="page-overlay"></div>
+  {% if enrolled_course_ids %}
+    <div style="
+      padding: 16px; margin-bottom: 16px; border: 2px solid #b91c1c;
+      background:#fef2f2; color:#7f1d1d; border-radius: 12px; font-weight: 800;
+    ">
+      You are already enrolled in a course. Enrolling in a new course will OVERWRITE your current course and reset your lesson progress.
+    </div>
+  {% endif %}
+
+  {% if courses %}
+    <div style="display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:18px;">
+      {% for course in courses %}
+        <article style="background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.06);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:12px;padding:16px 16px 0 16px;">
+            <div>
+              <div style="font-weight:700;font-size:1.05rem;">{{ course.name }}</div>
+              <div style="color:#444;">{{ course.code }}</div>
+            </div>
+          </div>
+          <div style="padding:10px 16px 2px 16px;color:#444;line-height:1.4;">
+            {% if course.description %}
+              {{ course.description|truncatewords:28 }}
+            {% else %}
+              Explore this unit to see its objectives, workload and outcomes.
+            {% endif %}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 16px;gap:12px;">
+            {% if course.status == 'active' %}
+              {% if course.id in enrolled_course_ids %}
+                <span style="font-size:.9rem;padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#eef2ff;color:#2d6cdf;font-weight:600;">Enrolled • {{ course.progress_text }}</span>
+                <button style="background:#e5e7eb;color:#6b7280;border:none;border-radius:12px;padding:10px 14px;font-weight:700;" disabled>Enrolled</button>
+              {% else %}
+                <span style="font-size:.9rem;padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#eef2ff;color:#2d6cdf;font-weight:600;">Open • Active</span>
+                <a class="enroll-link" data-course-name="{{ course.name }}" href="{% url 'course_management:enroll_in_course' course.id %}" style="background:#2d6cdf;color:white;text-decoration:none;border-radius:12px;padding:10px 14px;font-weight:700;">Enroll</a>
+              {% endif %}
+            {% else %}
+              <span style="font-size:.9rem;padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#f5f5f5;color:#6b7280;font-weight:600;">Enrollment closed</span>
+              <button style="background:#e5e7eb;color:#6b7280;border:none;border-radius:12px;padding:10px 14px;font-weight:700;" disabled>Unavailable</button>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No courses available.</p>
+  {% endif %}
+  
+  {% block scripts_extra %}
+    {% if enrolled_course_ids %}
+      <script>
+        (function() {
+          const links = document.querySelectorAll('a.enroll-link');
+          links.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+              const name = link.getAttribute('data-course-name') || 'this course';
+              const ok = window.confirm(
+                'You are already enrolled in a course. Enrolling in ' + name +
+                ' will OVERWRITE your current course and reset your lesson progress. Continue?'
+              );
+              if (!ok) { e.preventDefault(); }
+            });
+          });
+        })();
+      </script>
+    {% endif %}
+  {% endblock %}
+
+  <style>
+    /* Mobile responsive styles for courses */
+    @media (max-width: 980px) {
+      .course-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .course-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      
+      .course-card {
+        border-radius: 12px !important;
+      }
+      
+      .course-card .course-head {
+        padding: 12px 12px 0 12px !important;
+      }
+      
+      .course-card .course-body {
+        padding: 8px 12px 2px 12px !important;
+      }
+      
+      .course-card .course-meta {
+        padding: 0 12px 12px !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: stretch !important;
+      }
+      
+      .course-card .course-meta span {
+        text-align: center !important;
+      }
+      
+      .course-card .course-meta a,
+      .course-card .course-meta button {
+        width: 100% !important;
+        padding: 12px !important;
+        font-size: 14px !important;
+      }
+    }
+  </style>
+{% endblock %}

@@ -1,0 +1,182 @@
+/* Enrollment Management — matches Teacher Dashboard theme */
+:root{
+    --primary:#6787d6;
+    --primary-dark:#5a7bc7;
+    --secondary:#f8f9fa;
+    --success:#28a745;
+    --warning:#ffc107;
+    --danger:#dc3545;
+  
+    --bg:#0b0e14;            /* page tint under blurred bg */
+    --card: #4b4a4a9a;       /* same as teacher dashboard */
+    --card-accent:#98a5c953; /* glassy accent */
+    --text:#ffffff;
+    --muted:#4a5568;
+    --border:#ffffff;
+    --shadow:0 2px 4px rgba(0,0,0,0.1);
+    --shadow-lg:0 4px 8px rgba(0,0,0,0.15);
+    --radius:12px;
+  }
+  
+  /* Base */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,Helvetica,sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    line-height:1.55;
+  }
+  
+  /* Background image already in HTML */
+  .blurred-background{
+    position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
+    z-index:-1; filter:blur(12px) brightness(100%); transform:scale(1.1);
+  }
+  
+  /* Header */
+  .header{
+    position:sticky; top:0; z-index:10;
+    background: rgba(53,56,71,0.477);
+    border-bottom:1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  .header-content{
+    max-width:1200px; margin:0 auto; padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .header h1{ margin:0; font-weight:800; font-size: clamp(1.4rem, 2.2vw, 1.9rem); color:var(--primary); }
+  .header-actions{ display:flex; align-items:center; gap:12px; }
+  .user-info{ display:flex; align-items:center; gap:10px; color:var(--muted); font-weight:700; }
+  .user-avatar{
+    width:36px; height:36px; border-radius:999px; display:grid; place-items:center;
+    background:#dbe4ff22; border:1px solid #ffffff30; color:#fff; font-weight:800;
+  }
+  
+  /* Buttons */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 14px; border-radius:10px; text-decoration:none; cursor:pointer;
+    font-weight:700; border:1px solid transparent; transition:all .2s;
+  }
+  .btn-primary{ background:var(--primary); color:#fff; box-shadow:var(--shadow-lg); }
+  .btn-primary:hover{ background:var(--primary-dark); }
+  .btn-outline{
+    background:transparent; color:#fff; border-color:#ffffff55;
+  }
+  .btn-outline:hover{ background:#ffffff12; border-color:#ffffff88; }
+  .btn-success{ background: #2b9a46; color:#fff; }
+  .btn-success:hover{ background:#23833b; }
+  .btn-danger{ background:#dc3545; color:#fff; }
+  .btn-danger:hover{ filter:brightness(.95); }
+  .btn-sm{ padding:8px 12px; border-radius:8px; font-weight:800; }
+  
+  /* Page shell */
+  .container{ max-width:1200px; margin:0 auto; padding:24px; }
+  .page-header{ margin-bottom:12px; }
+  .page-title{ margin:0; font-size:1.6rem; font-weight:800; color:#fff; }
+  
+  /* Alerts */
+  .alert{
+    margin:10px 0; padding:10px 14px; border-radius:10px; font-weight:700;
+    background:#111827; color:#fff; box-shadow:var(--shadow);
+  }
+  .alert-success{ background:#065f46; }
+  .alert-error,.alert-danger{ background:#7f1d1d; }
+  
+  /* Courses grid */
+  .course-grid{
+    display:grid; gap:16px;
+    grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+  }
+  
+  /* Course card */
+  .course-card{
+    background:var(--card);
+    border:0.2px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  
+  /* Header area inside card */
+  .course-header{ padding:16px 16px 8px; background:var(--card-accent); border-bottom:1px solid #ffffff33; }
+  .course-title{ font-weight:800; font-size:1.8rem; color:#fff; margin-bottom:4px; }
+  .course-code{ font-weight:700; color:#e8edff; opacity:.92; margin-bottom:8px; }
+  .course-description{ color:#252525; font-weight:700; margin-bottom:10px; }
+  
+  .course-meta{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; }
+  .status-badge{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 10px;
+    border-radius:999px; font-weight:800; font-size:.85rem;
+    background:#e2e8f0; color:#334155;
+  }
+  .status-active{ background:#d4edda; color:#1a7f37; }
+  .status-inactive{ background:#f8d7da; color:#842029; }
+  .enrollment-count{ color:#ffffffd1; font-weight:700; }
+  
+  /* Body area */
+  .course-body{ padding:14px 16px; }
+  
+  /* Form row (student select + buttons) */
+  .form-row{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:14px;
+  }
+  .form-group{ min-width:220px; flex:1; }
+  label{ display:block; font-weight:800; color:#fff; margin-bottom:6px; }
+  .form-control{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid #ffffff55;
+    background:#ffffff14; color:#fff; font:inherit;
+  }
+  .form-control option{
+    background:#1f2937; color:#ffffff;
+  }
+  .form-control:focus{ outline:2px solid var(--primary); outline-offset:1px; }
+  
+  /* Enrolled students list */
+  .enrolled-students{ margin-top:10px; }
+  .section-title{ margin:0 0 8px; font-size:1.05rem; font-weight:800; color:#fff; }
+  
+  .student-grid{
+    display:grid; gap:10px;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .student-card{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px; border-radius:10px; background:#ffffff22; border:1px solid #ffffff44;
+  }
+  .student-info{ display:grid; gap:2px; }
+  .student-name{ font-weight:800; color:#fff; }
+  .student-id{ color:#dbe4ff; font-weight:700; opacity:.9; }
+  
+  /* Remove (×) button */
+  .remove-btn{
+    display:grid; place-items:center; width:32px; height:32px; border-radius:8px;
+    border:1px solid #ffffff55; background:#ffffff12; color:#fff; font-size:18px;
+    cursor:pointer; transition:all .2s;
+  }
+  .remove-btn:hover{ background:#dc3545; border-color:#dc3545; }
+  
+  /* Empty states */
+  .empty-state{
+    text-align:center; padding:22px; border-radius:12px;
+    background:#ffffff14; border:1px solid #ffffff33; color:#e7e7e7;
+  }
+  .empty-state h3{ margin:0 0 6px; font-size:1.3rem; font-weight:800; color:#fff; }
+  .empty-state p{ margin:0 0 12px; color:var(--muted); font-weight:600; }
+  
+  /* Utilities */
+  .muted{ color:var(--muted); }
+  .small{ font-size:.9rem; }
+  
+  /* Responsive */
+  @media (max-width: 860px){
+    .header-content{ padding:12px 16px; }
+    .container{ padding:16px; }
+  }
+  @media (max-width: 560px){
+    .form-row{ flex-direction:column; align-items:stretch; }
+    .btn-sm{ width:100%; }
+  }
+  

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Student Status Management • NotMoodle{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/student-status-mgmt.css' %}">
+{% endblock %}
+
+{% block nav_auth %}
+    <div class="nav-auth">
+    {% comment %} <h1>Enrollment Management</h1> {% endcomment %}
+    <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+    <a class="signup" href="{% url 'teachersManagement:teacher_home' %}"> ← Dashboard </a>
+    <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+    </div>
+{% endblock %}
+
+{% block content%}
+    <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">All Students</h2>
+        </div>
+
+        <div class="search-bar">
+            <form method="get" class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label for="search">Search Students</label>
+                    <div style="position:relative;">
+                        <input type="text" name="search" id="searchInput" class="form-control" 
+                               placeholder="Search by name or enrollment number..." 
+                               value="{{ search }}" style="padding-right:35px;">
+                        {% if search %}
+                        <button type="button" id="clearSearch" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#6b7280; cursor:pointer; font-size:20px; padding:0; width:24px; height:24px; display:flex; align-items:center; justify-content:center;" title="Clear search">&times;</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status Filter</label>
+                    <select name="status" id="statusFilter" class="form-control">
+                        <option value="">All Statuses</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="discontinued" {% if status_filter == 'discontinued' %}selected{% endif %}>Discontinued</option>
+                        <option value="dropped" {% if status_filter == 'dropped' %}selected{% endif %}>Dropped Out</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Student List</h3>
+            </div>
+            <div class="table-container">
+                {% if students %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Email</th>
+                                <th>Enrollment Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                                <tr>
+                                    <td>
+                                        <div class="student-info">
+                                            <div class="student-name">{{ student.full_name }}</div>
+                                            <div class="student-id">ID: {{ student.enrollment_number }}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ student.user.email }}</td>
+                                    <td>{{ student.date_enrolled|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ student.status }}">
+                                            {{ student.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{% url 'teachersManagement:student_status_edit' student.id %}" 
+                                               class="btn btn-sm btn-edit">Edit Status</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty-state">
+                        <h3>No students found</h3>
+                        <p>No students match your search criteria.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Live search with debouncing (waits 500ms after user stops typing)
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const searchForm = document.getElementById('searchForm');
+        const clearBtn = document.getElementById('clearSearch');
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchForm.submit();
+            }, 500); // Wait 500ms after user stops typing
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', debounceSearch);
+        }
+
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                searchForm.submit();
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchForm.submit();
+            });
+        }
+    </script>
+{% endblock %}

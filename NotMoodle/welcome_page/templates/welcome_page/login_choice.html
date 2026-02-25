@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Select Your Role • NotMoodle{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Blurred background - same style as signup page */
+  .page-bg {
+    position: fixed;
+    inset: 0;
+    background-image: url("{% static 'img/monash_woodside_building.jpg' %}");
+    background-size: cover;
+    background-position: center;
+    filter: blur(10px);
+    transform: scale(1.05);
+    z-index: -1;
+  }
+
+  /* Center the role selection */
+  .role-selection-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 300px); /* Account for navbar and footer */
+    padding: 40px 20px;
+  }
+
+  .role-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .role-header img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    margin-bottom: 16px;
+  }
+
+  .role-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgb(243, 238, 238);     
+    letter-spacing: 0.3px;
+  }
+
+  .roles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 260px));
+    gap: 24px;
+    justify-content: center;
+  }
+
+  .role {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #bfc9f3;
+    border-radius: 22px;
+    box-shadow: 0 12px 30px rgba(2, 6, 23, 0.10);
+    padding: 32px 24px;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .role:focus {
+    outline: none;
+  }
+
+  .role:focus-visible {
+    box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.25), 0 12px 30px rgba(2, 6, 23, 0.10);
+  }
+
+  .role:hover {
+    transform: translateY(-4px);
+    border-color: var(--brand);
+    box-shadow: 0 16px 40px rgba(2, 6, 23, 0.15);
+  }
+
+  .role:active {
+    transform: translateY(-2px);
+  }
+
+  .role__icon {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 18px;
+  }
+
+  .role__label {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 12px;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.2px;
+  }
+
+  .role:hover .role__label {
+    background: var(--brand-dark);
+  }
+
+  @media (max-width: 560px) {
+    .roles {
+      grid-template-columns: 1fr;
+      max-width: 300px;
+    }
+    
+    .role-selection-container {
+      min-height: calc(100vh - 250px);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <!-- Blurred background -->
+  <div class="page-bg"></div>
+  
+  <div class="role-selection-container">
+    <header class="role-header">
+      <img src="{% static 'img/logos.png' %}" alt="NotMoodle">
+      <h1>Select Your Role</h1>
+    </header>
+    
+    <section class="roles" aria-label="Choose a role to continue">
+      <!-- Student role -->
+      <a class="role" href="{% url 'login_students' %}">
+        <img src="{% static 'img/icon-student.png' %}" alt="" class="role__icon" aria-hidden="true">
+        <span class="role__label">Student</span>
+      </a>
+      
+      <!-- Teacher role -->
+      <a class="role" href="{% url 'login_teachers' %}">
+        <img src="{% static 'img/icon-teacher.png' %}" alt="" class="role__icon" aria-hidden="true">
+        <span class="role__label">Teacher</span>
+      </a>
+    </section>
+  </div>
+{% endblock %}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head><title>Student Home</title></head>
+<body>
+  <h1>Welcome {{ request.user.get_full_name|default:request.user.username }}</h1>
+  <p>Enrolment: {{ request.user.student.enrollment_number }}</p>
+
+  <p>
+    {% if has_enrollment %}
+      <a href="{% url 'student_management:student_dashboard' %}">Go to Dashboard</a>
+    {% else %}
+      <strong>Next step:</strong> Enroll in a course to access lessons.
+      <a href="{% url 'course_management:student_course_list' %}">📚 View & Enroll in Courses</a>
+    {% endif %}
+  </p>
+
+  <p>
+    <a href="{% url 'student_management:student_logout' %}">Logout</a>
+  </p>
+</body>
+</html>

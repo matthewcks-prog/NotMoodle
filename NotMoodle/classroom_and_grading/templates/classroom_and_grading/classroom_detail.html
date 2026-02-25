@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classroom • NotMoodle{% endblock %}
+
+{% block nav_auth %}
+<div class="nav-auth">
+  <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+  <a class="signup" href="{% url 'teachersManagement:teacher_home' %}">Dashboard</a>
+  <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+</div>
+{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/classroom.css' %}">
+  <style>
+    /* Background (same as other pages) */
+    .blurred-background{
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; filter: blur(12px) brightness(.98);
+      transform: scale(1); z-index: -1;
+    }
+
+    /* Layout container */
+    .container-tight{ max-width: 1200px; margin: 0 auto; padding: 8px 0 28px; }
+
+    /* Glass look for cards */
+    .glass-card{
+      background: rgba(255,255,255,.28);
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+    }
+
+    /* Page title */
+    .title-text{
+      font-size:28px; font-weight:800; letter-spacing:.2px;
+      color:#fff; margin: 0 0 18px; text-shadow: 0 1px 3px rgba(0,0,0,.18);
+    }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+      padding:10px 12px; border-radius:10px; font-weight:700;
+      text-decoration:none; transition:all .18s ease; border:1px solid transparent;
+      backdrop-filter: blur(8px);
+    }
+    .btn-primary{
+      background: rgba(118,147,218,1); color:#fff; border-color: rgba(118,147,218,1);
+      box-shadow: 0 8px 18px rgba(45,108,223,.28);
+    }
+    .btn-primary:hover{ filter:brightness(.96); transform: translateY(-1px); }
+
+    /* Override existing styles to work with glassmorphism */
+    .card {
+      background: rgba(255,255,255,.28) !important;
+      border: 1px solid rgba(255,255,255,.35) !important;
+      box-shadow: 0 12px 30px rgba(0,0,0,.12) !important;
+      backdrop-filter: blur(10px) !important;
+      border-radius: 14px !important;
+    }
+
+    .table {
+      background: rgba(255,255,255,.38) !important;
+    }
+
+    .table th {
+      background: rgba(255,255,255,.45) !important;
+      color: #1f2937 !important;
+      font-weight: 700 !important;
+    }
+
+    .table td {
+      color: #1f2937 !important;
+    }
+
+    .assignment-card {
+      background: rgba(255,255,255,.35) !important;
+      border: 1px solid rgba(255,255,255,.4) !important;
+    }
+
+    /* Keep existing functionality styles */
+    .actions-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .actions-inline .btn {
+      display: inline-flex;
+      align-items: center;
+    }
+    .actions-inline form { margin: 0; }
+    
+    .table-scroll {
+      --row-h: 48px;
+      --head-h: 44px;
+      max-height: calc(var(--head-h) + 5 * var(--row-h));
+      overflow-y: auto;
+    }
+
+    .table.table-sticky thead th {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,.45) !important;
+      z-index: 1;
+    }
+
+    .table.table-sticky tbody tr {
+      height: var(--row-h);
+    }
+
+    .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    .table-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    .assignments-scroll {
+      max-height: 3 * 140px;
+      max-height: calc(3 * 140px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .assignments-scroll::-webkit-scrollbar,
+    .submissions-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .assignments-scroll::-webkit-scrollbar-thumb,
+    .submissions-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 8px;
+    }
+    .assignments-scroll::-webkit-scrollbar-thumb:hover,
+    .submissions-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .assignment-card {
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 12px;
+      background: rgba(255,255,255,.35);
+    }
+
+    .submissions-scroll {
+      /* Allow submissions to expand naturally */
+      max-height: none;
+      overflow: visible;
+    }
+
+    .submissions-table thead th {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,.45) !important;
+      z-index: 1;
+    }
+
+    /* Grade input styling */
+    .grade-input {
+      padding: 6px 8px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 6px;
+      background: rgba(255,255,255,.7);
+      color: #1f2937;
+      font-size: 13px;
+    }
+
+    .grade-input:focus {
+      outline: none;
+      border-color: rgba(118,147,218,.5);
+      box-shadow: 0 0 0 2px rgba(118,147,218,.2);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+  <div class="container-tight">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+      <h1 class="title-text">Classroom Details</h1>
+      <a href="{% url 'classroom_and_grading:classroom_list' %}" class="btn btn-primary">← Back to Classrooms</a>
+    </div>
+
+    <!-- ===== Classroom header card ===== -->
+    <section class="card glass-card">
+      <div class="card-head">
+        <h2>
+          {{ classroom.lesson.title|default:classroom.lesson }}
+          {% if classroom.lesson.unit_code %}
+            ({{ classroom.lesson.unit_code }})
+          {% endif %}
+        </h2>
+        <div class="classroom-info">Classroom ID: <span>{{ classroom.pk }}</span></div>
+      </div>
+
+      <div class="details-grid">
+        <div class="details-block">
+          <h3>Lesson Details</h3>
+          <div class="list">
+            <div class="row">
+              <span class="label">Code</span>
+              <span class="data">{{ classroom.lesson.unit_code|default:"—" }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Title</span>
+              <span class="data">{{ classroom.lesson.title|default:classroom.lesson }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Students</span>
+              <span class="data">{{ roster|length }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-block">
+          <h3>Classroom Details</h3>
+          <div class="list">
+            <div class="row">
+              <span class="label">Teacher</span>
+              <span class="data">{{ classroom.teacher }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Start</span>
+              <span class="data">{{ classroom.start_date|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="row">
+              <span class="label">End</span>
+              <span class="data">
+                {% if classroom.end_date %}
+                  {{ classroom.end_date|date:"Y-m-d H:i" }}
+                {% else %}
+                  —
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Assignments card ===== -->
+    <section class="card glass-card" style="margin-top:1rem">
+      <div class="grades-head">
+        <h3>Assignments</h3>
+        <div class="actions" style="gap:8px">
+          <span class="muted" style="font-size: 0.9em;">Assignments are managed in the lesson. 
+            <a href="{% url 'teachersManagement:lessons:edit' classroom.lesson.pk %}" style="text-decoration: underline;">Edit Lesson</a>
+          </span>
+        </div>
+      </div>
+
+      {% if assignments %}
+        <div class="table-wrap table-scroll">
+          <table class="table table-sticky">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Release</th>
+                <th>Due</th>
+                <th>Maximum Marks</th>
+                <th>Weightage (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in assignments %}
+                <tr>
+                  <td>{{ a.title }}</td>
+                  <td>{{ a.release_date|date:"Y-m-d H:i" }}</td>
+                  <td>{{ a.due_date|date:"Y-m-d H:i" }}</td>
+                  <td>{{ a.marks }}</td>
+                  <td>{{ a.weightage|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {# === BEGIN: Assignment details (attachments + submissions) WITH SCROLL === #}
+        <div class="assignments-scroll list" style="margin-top:16px">
+          {% for a in assignments %}
+            <div class="assignment-card">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;">
+                <h4 style="margin:0">{{ a.title }}</h4>
+                <div class="muted">
+                  Due: {{ a.due_date|date:"Y-m-d H:i" }} •
+                  Teacher files: {{ a.attachments.count }} •
+                  Submissions: {{ a.classroom_submissions|length }}
+                </div>
+              </div>
+
+              {# Teacher attachments #}
+              <div style="margin-top:8px">
+                <strong>Teacher files:</strong>
+                {% if a.pdf or a.attachments.all %}
+                  <ul style="margin:.35rem 0 0; padding-left:1.1rem;">
+                    {% if a.pdf %}
+                      <li><a href="{{ a.pdf.url }}" target="_blank" rel="noopener">📄 {{ a.pdf_filename }} (Assignment PDF)</a></li>
+                    {% endif %}
+                    {% for att in a.attachments.all %}
+                      <li><a href="{{ att.file.url }}" target="_blank" rel="noopener">📄 {{ att.filename }}</a></li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="muted">No files uploaded.</span>
+                {% endif %}
+              </div>
+
+              {# Student submissions (scrolls after 2 rows, sticky header) #}
+              <div style="margin-top:12px">
+                <strong>Student submissions:</strong>
+                {% if a.classroom_submissions %}
+                  <div class="table-wrap" style="margin-top:.35rem">
+                    <div class="submissions-scroll">
+                      <table class="table submissions-table">
+                        <thead>
+                          <tr>
+                            <th>Student</th>
+                            <th>Submitted at</th>
+                            <th>File</th>
+                            <th>Grade</th>
+                            <th>Feedback</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for sub in a.classroom_submissions %}
+                            <tr>
+                              <td>
+                                {% if sub.student.user %}
+                                  {{ sub.student.user.get_full_name|default:sub.student.user.username }}
+                                {% else %}
+                                  {{ sub.student }}
+                                {% endif %}
+                              </td>
+                              <td>{{ sub.submitted_at|date:"Y-m-d H:i" }}</td>
+                              <td>
+                                <a href="{{ sub.pdf.url }}" target="_blank" rel="noopener">View PDF</a>
+                              </td>
+                              <td>
+                                {% if sub.cached_grade and sub.cached_grade.marks_awarded is not None %}
+                                  <span style="font-weight: 600; color: #166534;">{{ sub.cached_grade.marks_awarded }} / {{ a.marks }}</span>
+                                {% else %}
+                                  <span style="color: #6b7280;">Not graded</span>
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if sub.cached_grade and sub.cached_grade.feedback %}
+                                  <span style="font-size: 12px;">{{ sub.cached_grade.feedback }}</span>
+                                {% else %}
+                                  <span style="color: #6b7280; font-size: 12px;">No feedback</span>
+                                {% endif %}
+                              </td>
+                              <td>
+                                <form method="post" style="display:inline;">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="action" value="grade_submission">
+                                  <input type="hidden" name="assignment_id" value="{{ a.id }}">
+                                  <input type="hidden" name="student_id" value="{{ sub.student.id }}">
+                                  <div style="display: flex; gap: 4px; align-items: center;">
+                                    {% comment %} Check if this student has a grade {% endcomment %}
+                                    {% if sub.cached_grade %}
+                                      <input type="number" name="marks_awarded" min="0" max="{{ a.marks }}" step="0.01" placeholder="Grade" style="width:70px;" class="grade-input" value="{% if sub.cached_grade.marks_awarded is not None %}{{ sub.cached_grade.marks_awarded }}{% endif %}" />
+                                      <input type="text" name="feedback" placeholder="Feedback" style="width:120px;" class="grade-input" value="{{ sub.cached_grade.feedback }}" />
+                                    {% else %}
+                                      <input type="number" name="marks_awarded" min="0" max="{{ a.marks }}" step="0.01" placeholder="Grade" style="width:70px;" class="grade-input" />
+                                      <input type="text" name="feedback" placeholder="Feedback" style="width:120px;" class="grade-input" />
+                                    {% endif %}
+                                    <button type="submit" class="btn" style="background:#22c55e;color:#fff;padding:6px 10px;font-size:12px;">Save</button>
+                                  </div>
+                                </form>
+                              </td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="muted" style="margin-top:.25rem">No submissions yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {# === END: Assignment details (attachments + submissions) WITH SCROLL === #}
+
+      {% else %}
+        <p class="muted">
+          No assignments in this lesson yet. 
+          <a href="{% url 'teachersManagement:lessons:edit' classroom.lesson.pk %}">Add assignments to the lesson</a> to see them here.
+        </p>
+      {% endif %}
+    </section>
+
+    {% if grading_assignment %}
+    <!-- ===== Grading card ===== -->
+    <section class="card glass-card" style="margin-top:1rem">
+      <div class="card-head">
+        <h3>Grade: {{ grading_assignment.title }}</h3>
+        <div class="classroom-info">Max marks: <span>{{ grading_assignment.marks }}</span></div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_grades">
+        <input type="hidden" name="assignment_id" value="{{ grading_assignment.id }}">
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Student</th><th>Mark</th><th>Feedback</th></tr>
+            </thead>
+            <tbody>
+              {% for row in grade_rows %}
+                <tr>
+                  <td class="student-cell">{{ row.student }}</td>
+                  <td>
+                    <input class="grade-input" type="number" step="0.01"
+                           name="mark_{{ row.student_id }}"
+                           value="{% if row.grade and row.grade.marks_awarded is not None %}{{ row.grade.marks_awarded }}{% endif %}">
+                  </td>
+                  <td>
+                    <input class="grade-input" type="text"
+                           name="fb_{{ row.student_id }}"
+                           value="{% if row.grade %}{{ row.grade.feedback }}{% endif %}">
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="actions" style="margin-top:10px">
+          <button type="submit" class="btn btn-primary">Save Grades</button>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+
+    <!-- ===== Roster card ===== -->
+    <section class="card glass-card" style="margin-top:1rem">
+      <div class="grades-head">
+        <h3>Roster</h3>
+      </div>
+
+      {% if roster %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Student</th><th style="width:140px">Actions</th></tr></thead>
+            <tbody>
+              {% for r in roster %}
+                <tr>
+                  <td>{{ r.student }}</td>
+                  <td>
+                    <form method="post" style="display:inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="remove">
+                      <input type="hidden" name="student_id" value="{{ r.student_id }}">
+                      <button class="btn" style="background:#dc3545;color:#fff;" type="submit">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="muted">No students yet.</p>
+      {% endif %}
+
+      <div class="list" style="margin-top:10px">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add">
+
+          <div class="add-students-header">Add students</div>
+
+          <div class="add-students-row">
+            <div class="add-students-box">
+              <div class="add-students-scroll">
+                {{ add_form.students }}
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm" type="submit">Add Selected</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+
+  <script>
+    function showToast(message, type='success', timeout=2200){
+      const wrap = document.getElementById('toast-wrap');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = message;
+      wrap.appendChild(el);
+      setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(6px)'; }, timeout-300);
+      setTimeout(()=> el.remove(), timeout);
+    }
+  </script>
+{% endblock %}

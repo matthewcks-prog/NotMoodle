@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load course_extras %}
+{% block title %}Enrollment Management • NotMoodle{% endblock %}
+{% block head_extra %}
+    <link rel="stylesheet" href="{% static 'css/course-enrollment.css' %}">
+{% endblock %}
+
+{% block nav_auth %}
+<div class="nav-auth">
+  {% comment %} <h1>Enrollment Management</h1> {% endcomment %}
+  <a class="login" href="#">Hello, {{ request.user.get_full_name|default:request.user.username }}</a>
+  <a class="signup" href="{% url 'teachersManagement:teacher_home' %}"> ← Dashboard </a>
+  <a class="login" href="{% url 'teachersManagement:teacher_logout' %}">Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+    <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">Course Enrollments</h2>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="course-grid">
+            {% for course in courses %}
+                <div class="course-card">
+                    <div class="course-header">
+                        <div class="course-title">{{ course.name }}</div>
+                        <div class="course-code">{{ course.code }}</div>
+                        <div class="course-description">{{ course.description|truncatewords:15|default:"No description available" }}</div>
+                        <div class="course-meta">
+                            <span class="status-badge status-{{ course.status }}">
+                                {{ course.get_status_display }}
+                            </span>
+                            <span class="enrollment-count">
+                                {% with enrollment_data=course_enrollments|lookup:course.id %}
+                                    {{ enrollment_data.enrolled_count|default:0 }} students enrolled
+                                {% endwith %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="course-body">
+                        <form method="post" class="enrollment-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="course_id" value="{{ course.id }}">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="student_{{ course.id }}">Select Student</label>
+                                    <select name="student_id" id="student_{{ course.id }}" class="form-control" required>
+                                        <option value="">Choose a student...</option>
+                                        {% for student in students %}
+                                            <option value="{{ student.id }}">{{ student.full_name }} ({{ student.enrollment_number }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" name="action" value="enroll" class="btn btn-success btn-sm">Enroll</button>
+                                <button type="submit" name="action" value="unenroll" class="btn btn-danger btn-sm">Unenroll</button>
+                            </div>
+                        </form>
+                        
+                        <div class="enrolled-students">
+                            <h3 class="section-title">Currently Enrolled Students</h3>
+                            <div class="student-grid">
+                                {% with enrollment_data=course_enrollments|lookup:course.id %}
+                                    {% for enrollment in enrollment_data.enrolled_students %}
+                                        <div class="student-card">
+                                            <div class="student-info">
+                                                <div class="student-name">{{ enrollment.student.full_name }}</div>
+                                                <div class="student-id">ID: {{ enrollment.student.enrollment_number }}</div>
+                                            </div>
+                                            <form method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="course_id" value="{{ course.id }}">
+                                                <input type="hidden" name="student_id" value="{{ enrollment.student.id }}">
+                                                <button type="submit" name="action" value="unenroll" class="remove-btn" title="Remove student">×</button>
+                                            </form>
+                                        </div>
+                                    {% empty %}
+                                        <div class="empty-state">
+                                            <p>No students enrolled in this course yet.</p>
+                                        </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>No courses available</h3>
+                    <p>Create courses first to manage enrollments.</p>
+                    <a href="{% url 'teacher_courses:course_create' %}" class="btn btn-primary">Create Course</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

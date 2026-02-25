@@ -1,0 +1,36 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Enrolled</title>
+    <style>
+      html, body { height: 100%; }
+      body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .bg { position:fixed; inset:0; background:url('{% static "img/monash_woodside_building.jpg" %}') center/cover no-repeat; filter: blur(6px); transform: scale(1.03); z-index:-1; }
+      .wrap { min-height:100%; display:grid; place-items:center; padding:24px; }
+      .card { width:min(100%, 680px); background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:18px; box-shadow:0 12px 30px rgba(0,0,0,.1); padding:26px; }
+      h1 { margin:0 0 8px; }
+      .lead { color:#555; margin:0 0 16px; }
+      .actions { display:flex; gap:10px; margin-top:18px; }
+      .btn { appearance:none; border:none; border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer; }
+      .btn-primary { background:#2d6cdf; color:#fff; box-shadow:0 8px 18px rgba(45,108,223,.25); }
+      .btn-secondary { background:#eef2ff; color:#2d6cdf; }
+    </style>
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="wrap">
+      <section class="card">
+        <h1>Enrolled successfully</h1>
+        <p class="lead">You are now enrolled in <strong>{{ course.code }}</strong> — {{ course.name }}.</p>
+        <p>Progress: {{ credits_completed }} / {{ course.total_credits_required }} credits.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="{% url 'course_management:student_course_list' %}">Back to courses</a>
+        </div>
+      </section>
+    </main>
+  </body>
+ </html>
+

@@ -1,0 +1,47 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtualenvs
+venv/
+.venv/
+env/
+ENV/
+
+# Django dev DB & collected/static uploads
+db.sqlite3
+staticfiles/
+media/
+
+# Secrets / local overrides
+.env
+.env.*
+settings_local.py
+
+# Testing / tooling
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+.pyre/
+.dmypy.json
+
+# Packaging / builds
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Large media (exceeds GitHub 100MB limit)
+demo_NotMoodle.mp4
+
+# Editor/OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

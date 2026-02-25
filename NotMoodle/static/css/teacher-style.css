@@ -1,0 +1,14 @@
+.page { font-family: system-ui, Arial, sans-serif; color: #0f172a; margin: 0; }
+* { box-sizing: border-box; }
+.blurred-background { position: fixed; inset: 0; background-image: url('/static/img/login-bg-teacher.jpg'); background-size: cover; background-position: center; filter: blur(10px); transform: scale(1.05); z-index: -1; }
+.layout { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.card { width: min(100%, 600px); background: #fff; border: 1px solid #bfc9f3; border-radius: 18px; box-shadow: 0 10px 30px rgba(2,6,23,.08); padding: 28px 26px 22px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.card-header h1 { margin: 10px 0 4px; font-size: 2rem; color: rgb(76,99,191); font-weight: 800; }
+.logo { width: 72px; height: 72px; object-fit: contain; }
+.field { margin-top: 14px; }
+.field label { color: #64748b; margin: 0 0 6px 2px; display: block; font-size: .8rem; font-weight: 500; }
+.field input { width: 100%; padding: 12px 14px; border: 1px solid #bfc9f3; border-radius: 12px; display: block; }
+.btn { width: 100%; margin-top: 20px; padding: 13px 16px; border-radius: 12px; border: 1px solid transparent; background: #6787d6; color: #fff; font-weight: 600; box-shadow: 0 6px 16px rgba(79,70,229,.25), 0 2px 6px rgba(2,6,23,.12); }
+.alert { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #dc2626; color: #fff; text-align: center; }
+.card-footer { margin-top: 12px; font-weight: 800; }

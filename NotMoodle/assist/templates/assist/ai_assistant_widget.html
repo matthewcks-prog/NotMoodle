@@ -1,0 +1,511 @@
+<!-- AI Assistant Floating Widget -->
+<div id="ai-assistant-widget" class="ai-assistant-widget">
+  <!-- Floating Button -->
+  <button 
+    id="ai-assistant-toggle" 
+    class="ai-assistant-toggle" 
+    aria-label="Open NotMoodle AI Assistant"
+    onclick="toggleAIAssistant()"
+  >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span>AI Assistant</span>
+  </button>
+
+  <!-- Chat Panel (hidden by default) -->
+  <div id="ai-assistant-panel" class="ai-assistant-panel" style="display: none;">
+    <div class="ai-assistant-header">
+      <div>
+        <h3>NotMoodle AI Assistant</h3>
+        <p class="ai-assistant-subtitle"> <span id="usage-counter">Loading...</span></p>
+      </div>
+      <button 
+        class="ai-close-btn" 
+        onclick="toggleAIAssistant()" 
+        aria-label="Close AI Assistant"
+      >×</button>
+    </div>
+
+    <div class="ai-assistant-notice">
+      ℹ️ I AM DANISH, YOU HAVE TO LISTEN TO EVERYTHING I SAY
+    </div>
+
+    <div class="ai-assistant-body" id="ai-chat-body">
+      <div class="ai-welcome-message">
+        <p>👋 Hi, i am your favourite AI assistant (NOT Antony, tho)</p>
+        <p> Asking me about lessons, concepts, or topics you're studying.</p>
+      </div>
+    </div>
+
+    <form id="ai-assistant-form" class="ai-assistant-form" onsubmit="askAssistant(event)">
+      <textarea 
+        id="ai-question-input"
+        name="message" 
+        placeholder="Ask a question about your course..." 
+        rows="2"
+        required
+        aria-label="Your question"
+      ></textarea>
+      <button type="submit" id="ai-submit-btn" aria-label="Send question">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<style>
+.ai-assistant-widget {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+}
+
+.ai-assistant-toggle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+  }
+}
+
+.ai-assistant-toggle:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+  animation: none;
+}
+
+.ai-assistant-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ai-assistant-panel {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 420px;
+  max-width: calc(100vw - 48px);
+  max-height: 600px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-assistant-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ai-assistant-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ai-assistant-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.ai-close-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  font-size: 28px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ai-close-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.ai-assistant-notice {
+  background: #f0f4ff;
+  color: #334155;
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ai-assistant-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  min-height: 300px;
+  max-height: 400px;
+}
+
+.ai-welcome-message {
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ai-welcome-message p {
+  margin: 0 0 12px 0;
+}
+
+.ai-message {
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-message-user {
+  background: #f0f4ff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-left: 40px;
+  font-size: 14px;
+}
+
+.ai-message-assistant {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-right: 40px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ai-message-assistant p {
+  margin: 0 0 8px 0;
+}
+
+.ai-message-assistant p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-sources {
+  margin-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+}
+
+.ai-sources-toggle {
+  background: none;
+  border: none;
+  color: var(--brand, #7693da);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  font-weight: 500;
+}
+
+.ai-sources-list {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+}
+
+.ai-source-item {
+  margin-bottom: 6px;
+  padding: 6px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.ai-source-lesson {
+  font-weight: 600;
+  color: var(--brand, #7693da);
+}
+
+.ai-loading {
+  display: flex;
+  gap: 4px;
+  padding: 12px;
+  margin-right: 40px;
+}
+
+.ai-loading-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--muted, #6b7280);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.ai-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.ai-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.ai-assistant-form {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.ai-assistant-form textarea {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ai-assistant-form textarea:focus {
+  border-color: var(--brand, #7693da);
+}
+
+.ai-assistant-form button {
+  background: var(--brand, #7693da);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.ai-assistant-form button:hover {
+  opacity: 0.9;
+}
+
+.ai-assistant-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-error {
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .ai-assistant-panel {
+    width: calc(100vw - 32px);
+    right: 16px;
+    bottom: 16px;
+  }
+  
+  .ai-assistant-toggle {
+    bottom: 16px;
+    right: 16px;
+  }
+}
+</style>
+
+<script>
+function toggleAIAssistant() {
+  const panel = document.getElementById('ai-assistant-panel');
+  const button = document.getElementById('ai-assistant-toggle');
+  
+  if (panel.style.display === 'none') {
+    panel.style.display = 'flex';
+    button.style.display = 'none';
+    loadUsageStats();
+  } else {
+    panel.style.display = 'none';
+    button.style.display = 'flex';
+  }
+}
+
+async function loadUsageStats() {
+  try {
+    const response = await fetch('/api/notmoodle/usage/');
+    const data = await response.json();
+    document.getElementById('usage-counter').textContent = 
+      `${data.questions_today}/${data.daily_limit} queries today`;
+  } catch (error) {
+    console.error('Failed to load usage stats:', error);
+  }
+}
+
+async function askAssistant(event) {
+  event.preventDefault();
+  
+  const form = event.target;
+  const input = document.getElementById('ai-question-input');
+  const submitBtn = document.getElementById('ai-submit-btn');
+  const chatBody = document.getElementById('ai-chat-body');
+  const question = input.value.trim();
+  
+  if (!question) return;
+  
+  // Add user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'ai-message';
+  userMsg.innerHTML = `<div class="ai-message-user">${escapeHtml(question)}</div>`;
+  chatBody.appendChild(userMsg);
+  
+  // Add loading indicator
+  const loadingMsg = document.createElement('div');
+  loadingMsg.className = 'ai-message';
+  loadingMsg.innerHTML = `
+    <div class="ai-loading">
+      <div class="ai-loading-dot"></div>
+      <div class="ai-loading-dot"></div>
+      <div class="ai-loading-dot"></div>
+    </div>
+  `;
+  chatBody.appendChild(loadingMsg);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  
+  // Disable form
+  input.disabled = true;
+  submitBtn.disabled = true;
+  input.value = '';
+  
+  try {
+    const response = await fetch('/api/notmoodle/ask/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ message: question })
+    });
+    
+    const data = await response.json();
+    
+    // Remove loading indicator
+    loadingMsg.remove();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get response');
+    }
+    
+    // Add assistant message
+    const assistantMsg = document.createElement('div');
+    assistantMsg.className = 'ai-message';
+    
+    let sourcesHtml = '';
+    if (data.sources && data.sources.length > 0) {
+      const sourcesId = 'sources-' + Date.now();
+      sourcesHtml = `
+        <div class="ai-sources">
+          <button type="button" class="ai-sources-toggle" onclick="toggleSources('${sourcesId}')">
+            📚 View sources (${data.sources.length})
+          </button>
+          <div id="${sourcesId}" class="ai-sources-list" style="display: none;">
+            ${data.sources.map(s => `
+              <div class="ai-source-item">
+                <div class="ai-source-lesson">${escapeHtml(s.lesson)}</div>
+                <div>${escapeHtml(s.excerpt)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    assistantMsg.innerHTML = `
+      <div class="ai-message-assistant">
+        ${formatMessage(data.reply)}
+        ${sourcesHtml}
+      </div>
+    `;
+    chatBody.appendChild(assistantMsg);
+    
+    // Update usage counter
+    document.getElementById('usage-counter').textContent = 
+      `${data.usage_today}/${100} queries today`;
+    
+  } catch (error) {
+    // Remove loading indicator
+    loadingMsg.remove();
+    
+    // Show error
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'ai-message';
+    errorMsg.innerHTML = `<div class="ai-error">${escapeHtml(error.message)}</div>`;
+    chatBody.appendChild(errorMsg);
+  } finally {
+    // Re-enable form
+    input.disabled = false;
+    submitBtn.disabled = false;
+    input.focus();
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+}
+
+function toggleSources(id) {
+  const sourcesDiv = document.getElementById(id);
+  sourcesDiv.style.display = sourcesDiv.style.display === 'none' ? 'block' : 'none';
+}
+
+function formatMessage(text) {
+  // Simple formatting: convert line breaks to <p> tags
+  return text.split('\n\n').map(para => `<p>${escapeHtml(para).replace(/\n/g, '<br>')}</p>`).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>

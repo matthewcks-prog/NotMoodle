@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="5.958" timestamp="2025-10-23T22:59:43.862303+11:00" hostname="Matthew"><testcase classname="NotMoodle.student_management.tests.test_views.TestStudentDashboard" name="test_dashboard_accessible_to_authenticated_student" time="5.243"><failure message="assert 302 == 200&#10; +  where 302 = &lt;HttpResponseRedirect status_code=302, &quot;text/html; charset=utf-8&quot;, url=&quot;/courses/student/&quot;&gt;.status_code">student_management\tests\test_views.py:23: in test_dashboard_accessible_to_authenticated_student
+    assert response.status_code == 200
+E   assert 302 == 200
+E    +  where 302 = &lt;HttpResponseRedirect status_code=302, "text/html; charset=utf-8", url="/courses/student/"&gt;.status_code
+        client     = &lt;django.test.client.Client object at 0x000001896CCC96D0&gt;
+        response   = &lt;HttpResponseRedirect status_code=302, "text/html; charset=utf-8", url="/courses/student/"&gt;
+        self       = &lt;student_management.tests.test_views.TestStudentDashboard object at 0x000001896B5A0500&gt;
+        student_user = &lt;User: testuser&gt;
+        url        = '/students/dashboard/'</failure></testcase></testsuite></testsuites>

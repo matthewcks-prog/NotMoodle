@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Enrollments • {{ course.code }} — {{ course.name }} • NotMoodle{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Background */
+  .blurred-background{
+    position: fixed; inset:0; width:100%; height:100%;
+    object-fit: cover; filter: blur(12px) brightness(.98);
+    transform: scale(1.06); z-index:-1;
+  }
+
+  /* Page shell */
+  .container-tight{ max-width: 1100px; margin: 0 auto; padding: 8px 0 28px; }
+
+  /* Glass look */
+  .glass-card{
+    background: rgba(255,255,255,.28);
+    border: 1px solid rgba(255,255,255,.35);
+    box-shadow: 0 12px 30px rgba(0,0,0,.12);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+  }
+
+  /* Header */
+  .page-head{
+    display:flex; align-items:center; gap:12px; margin-bottom: 14px;
+  }
+  .page-title{
+    margin:0; font-size: 1.6rem; font-weight: 800; color:#fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,.18);
+  }
+  .status-badge{
+    margin-left:auto; padding:6px 12px; border-radius:9999px; font-weight:700; font-size:.85rem;
+    background: rgba(255,255,255,.22); color:#fff; border:1px solid rgba(255,255,255,.35);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Buttons */
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    padding:10px 12px; border-radius:10px; font-weight:700; text-decoration:none;
+    transition: all .18s ease; border:1px solid transparent; backdrop-filter: blur(8px);
+  }
+  .btn-glass{
+    background: rgba(255,255,255,.16); color:#fff; border-color: rgba(255,255,255,.28);
+    box-shadow: 0 8px 18px rgba(0,0,0,.12);
+  }
+  .btn-glass:hover{ background: rgba(255,255,255,.22); transform: translateY(-1px); }
+  .btn-primary{
+    background: rgba(118,147,218,1); color:#fff; border-color: rgba(118,147,218,1);
+    box-shadow: 0 8px 18px rgba(45,108,223,.28);
+  }
+  .btn-primary:hover{ filter: brightness(.96); transform: translateY(-1px); }
+
+  /* Toolbar */
+  .toolbar{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:12px; }
+  .search{ flex:1; min-width:260px; }
+  .search input{
+    width:100%; padding:10px 12px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.24);
+    background: rgba(255,255,255,.25); color:#111827; backdrop-filter: blur(8px);
+  }
+
+  /* Table */
+  .table-wrap{ overflow:hidden; }
+  .table-glass{ background: rgba(255,255,255,.38); }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ padding:12px; border-bottom:1px solid rgba(255,255,255,.21); text-align:left; vertical-align:top; }
+  th{ font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.18); }
+  td{ color:#1f2937; }
+  .actions{ text-align:right; }
+
+  /* Chips */
+  .pill{
+    padding:6px 10px; border-radius:9999px; font-size:.85rem; font-weight:700;
+    background:#f1f5f9; color:#334155; display:inline-block;
+    border:1px solid #e5e7eb77;
+  }
+
+  .empty{ text-align:center; color:#fff; padding:16px; text-shadow:0 1px 2px rgba(0,0,0,.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+  <img class="blurred-background" src="{% static 'img/grading_page_bg.jpg' %}" alt="">
+
+  <div class="container-tight">
+    <div class="page-head">
+      <h1 class="page-title">Manage enrollments • {{ course.code }} — {{ course.name }}</h1>
+      <span class="status-badge">{{ course.get_status_display }}</span>
+    </div>
+
+    <div class="glass-card">
+      <div class="toolbar">
+        <div class="search">
+          <input id="search" type="search" placeholder="Search students by name or email…" oninput="filterRows()">
+        </div>
+        <a class="btn btn-glass" href="{% url 'teacher_courses:teacher_course_list' %}">← Back to courses</a>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-glass">
+          <table id="students-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>GPA</th>
+                <th class="actions">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in students %}
+                <tr>
+                  <td>{{ student.full_name }}</td>
+                  <td>{{ student.email }}</td>
+                  <td>{{ student.gpa|default:"-" }}</td>
+                  <td class="actions">
+                    {% if student.id in enrolled_student_ids %}
+                      <span class="pill">Already enrolled</span>
+                    {% else %}
+                      <form method="post" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                        <button class="btn btn-primary" type="submit">Enroll</button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="empty">No students found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function filterRows() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      document.querySelectorAll('#students-table tbody tr').forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+  </script>
+{% endblock %}

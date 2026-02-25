@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  db:
+    image: ankane/pgvector:latest
+    container_name: notmoodle-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"  # host:container
+    environment:
+      POSTGRES_DB: ${DB_NAME:-notmoodle_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-notmoodle}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  pgdata:
