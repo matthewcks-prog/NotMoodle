@@ -41,6 +41,12 @@ You can **watch a short demo of the NotMoodle LMS** here:
 
 - [Project demo (mp4, root of this repo)](demo_NotMoodle.mp4)
 
+## Retrospective report
+
+A written retrospective reflecting on the team process, agile practices, and lessons learned is available:
+
+- [Retrospective report (PDF)](Retrospective_report.pdf)
+
 ---
 
 ## Tech stack
